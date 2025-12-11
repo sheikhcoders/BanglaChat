@@ -20,9 +20,13 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-    - uses: actions/checkout@v4
+    # 🛡️ Sentinel: Pinning actions to a specific commit SHA is a security best practice.
+    # This prevents supply chain attacks where a compromised tag could inject malicious code.
+    # See https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-third-party-actions
+    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # pin@v4
     - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
+      # 🛡️ Sentinel: Pinning actions to a specific commit SHA is a security best practice.
+      uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # pin@v4
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
