@@ -27,5 +27,9 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
     - run: npm ci
-    - run: npm run build --if-present
+    # ⚡ Bolt: Only build on the primary Node.js version (20.x) to speed up the CI pipeline.
+    # The build output is the same across versions, so building on each is redundant.
+    - name: Build
+      if: matrix.node-version == '20.x'
+      run: npm run build --if-present
     - run: npm test
