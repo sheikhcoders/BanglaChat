@@ -11,8 +11,10 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    # Only run if package.json exists to avoid failures in empty repositories
+    if: hashFiles('package.json') != ''
+
     permissions:
       contents: read
 
