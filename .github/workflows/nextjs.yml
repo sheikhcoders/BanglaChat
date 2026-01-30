@@ -13,10 +13,10 @@ on:
   workflow_dispatch:
 
 # Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
-# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+# For performance and resource efficiency, cancel in-progress runs as we only care about the latest deployment.
 concurrency:
   group: "pages"
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   # Build job
@@ -24,6 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      actions: write # Required for actions/cache to save new cache entries
     steps:
       - name: Checkout
         uses: actions/checkout@v4
