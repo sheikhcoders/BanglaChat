@@ -13,7 +13,8 @@ on:
   workflow_dispatch:
 
 # Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
-# For performance and resource efficiency, cancel in-progress runs as we only care about the latest deployment.
+# Optimization: cancel in-progress runs to save CI resources. This is safe for GitHub Pages
+# because each deployment is a standalone snapshot, and only the latest version needs to be live.
 concurrency:
   group: "pages"
   cancel-in-progress: true
