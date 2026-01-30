@@ -14,6 +14,10 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+      actions: write # Required for caching to work correctly
+
     strategy:
       matrix:
         node-version: [18.x, 20.x, 22.x]
@@ -25,7 +29,28 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+
+    - name: Cache npm dependencies
+      # Performance: Cache dependencies to speed up subsequent runs.
+      # Only runs if a lock file is found to prevent hard failures in empty repositories.
+      if: hashFiles('package-lock.json', 'yarn.lock') != ''
+      uses: actions/cache@v4
+      with:
+        path: ~/.npm
+        # Key includes node-version to prevent cache collisions across the matrix.
+        key: ${{ runner.os }}-node-${{ matrix.node-version }}-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-node-${{ matrix.node-version }}-
+
+    - name: Install dependencies
+      # Skip if no package.json to prevent CI failures in unconfigured repositories.
+      if: hashFiles('package.json') != ''
+      run: npm ci
+
+    - name: Build
+      if: hashFiles('package.json') != ''
+      run: npm run build --if-present
+
+    - name: Test
+      if: hashFiles('package.json') != ''
+      run: npm test

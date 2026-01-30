@@ -13,10 +13,11 @@ on:
   workflow_dispatch:
 
 # Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
-# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+# Optimization: cancel in-progress runs to save CI resources. This is safe for GitHub Pages
+# because each deployment is a standalone snapshot, and only the latest version needs to be live.
 concurrency:
   group: "pages"
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   # Build job
@@ -24,6 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      actions: write # Required for actions/cache to save new cache entries
     steps:
       - name: Checkout
         uses: actions/checkout@v4
