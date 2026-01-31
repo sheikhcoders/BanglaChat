@@ -9,9 +9,17 @@ on:
   pull_request:
     branches: [ "main" ]
 
+# PERFORMANCE: Optimize resource usage by canceling in-progress runs for the same branch/PR.
+# This prevents redundant builds and saves GitHub Actions minutes.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
-
+    # PERFORMANCE: Skip execution if no package.json is found.
+    # On empty repositories, this reduces CI waste by 100%.
+    if: hashFiles('package.json') != ''
     runs-on: ubuntu-latest
 
     strategy:
