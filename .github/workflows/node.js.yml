@@ -9,10 +9,21 @@ on:
   pull_request:
     branches: [ "main" ]
 
+# Cancel in-progress runs when a new push is made to the same branch to save CI minutes
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
+    # Only run if a package.json exists to avoid failing on an empty/initial repository
+    if: hashFiles('package.json') != ''
 
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      actions: write # Required to save the npm cache
 
     strategy:
       matrix:
@@ -20,9 +31,9 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # actions/checkout@v4
     - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'

@@ -1,0 +1,3 @@
+## 2025-05-14 - CI Performance and Permissions Patterns
+**Learning:** In this repository, custom permissions block the default behavior of the `GITHUB_TOKEN`. Specifically, `actions: write` must be explicitly granted to the `build` job to enable `actions/cache` and `setup-node` to persist their caches. Without this, caching is read-only, leading to slower subsequent builds. Additionally, using `if: hashFiles('package.json') != ''` at the job level prevents "failing fast" (failed jobs) which saves CI minutes compared to letting the job fail during a step.
+**Action:** Always include `actions: write` when using cache-related actions if permissions are customized. Use job-level `if` checks for environment requirements to skip unnecessary runs.
