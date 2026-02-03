@@ -33,21 +33,27 @@ jobs:
         if [ -f "${{ github.workspace }}/pnpm-lock.yaml" ]; then
           echo "manager=pnpm" >> $GITHUB_OUTPUT
           echo "command=install" >> $GITHUB_OUTPUT
-          exit 0
+          echo "cache=pnpm" >> $GITHUB_OUTPUT
         elif [ -f "${{ github.workspace }}/yarn.lock" ]; then
           echo "manager=yarn" >> $GITHUB_OUTPUT
           echo "command=install" >> $GITHUB_OUTPUT
-          exit 0
-        else
+          echo "cache=yarn" >> $GITHUB_OUTPUT
+        elif [ -f "${{ github.workspace }}/package-lock.json" ]; then
           echo "manager=npm" >> $GITHUB_OUTPUT
           echo "command=ci" >> $GITHUB_OUTPUT
-          exit 0
+          echo "cache=npm" >> $GITHUB_OUTPUT
+        else
+          echo "manager=npm" >> $GITHUB_OUTPUT
+          # Fallback to install if no lockfile is found (ci requires a lockfile)
+          echo "command=install" >> $GITHUB_OUTPUT
+          # Disable caching if no lockfile is found to prevent setup-node failure
+          echo "cache=" >> $GITHUB_OUTPUT
         fi
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: ${{ steps.detect-package-manager.outputs.manager }}
+        cache: ${{ steps.detect-package-manager.outputs.cache }}
     - name: Install pnpm
       if: steps.detect-package-manager.outputs.manager == 'pnpm'
       # Performance: Enable corepack to use pnpm (saves ~10s compared to using a separate setup action)
