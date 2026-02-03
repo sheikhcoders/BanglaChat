@@ -1,0 +1,3 @@
+## 2025-02-03 - CI Caching vs. Security Permissions
+**Learning:** While `actions: write` permission is often documented as required to save caches in certain GitHub Actions environments (especially public repositories), it can be flagged as a security over-reach in strict environments. This creates a tension between performance (caching) and security (least privilege).
+**Action:** Prioritize security by following the principle of least privilege unless caching is critically broken and the risk is explicitly accepted. Always add clear comments for any performance-related permission changes to justify them.
