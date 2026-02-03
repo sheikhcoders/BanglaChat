@@ -11,6 +11,8 @@ on:
 
 jobs:
   build:
+    permissions:
+      contents: read
 
     runs-on: ubuntu-latest
 
@@ -21,11 +23,46 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+    - name: Detect package manager
+      id: detect-package-manager
+      run: |
+        if [ -f "package-lock.json" ]; then
+          echo "manager=npm" >> $GITHUB_OUTPUT
+          echo "cache=npm" >> $GITHUB_OUTPUT
+          echo "command=ci" >> $GITHUB_OUTPUT
+          echo "exists=true" >> $GITHUB_OUTPUT
+        elif [ -f "yarn.lock" ]; then
+          echo "manager=yarn" >> $GITHUB_OUTPUT
+          echo "cache=yarn" >> $GITHUB_OUTPUT
+          echo "command=install" >> $GITHUB_OUTPUT
+          echo "exists=true" >> $GITHUB_OUTPUT
+        elif [ -f "pnpm-lock.yaml" ]; then
+          echo "manager=pnpm" >> $GITHUB_OUTPUT
+          echo "cache=pnpm" >> $GITHUB_OUTPUT
+          echo "command=install" >> $GITHUB_OUTPUT
+          echo "exists=true" >> $GITHUB_OUTPUT
+        elif [ -f "package.json" ]; then
+          echo "manager=npm" >> $GITHUB_OUTPUT
+          echo "cache=" >> $GITHUB_OUTPUT
+          echo "command=install" >> $GITHUB_OUTPUT
+          echo "exists=true" >> $GITHUB_OUTPUT
+        else
+          echo "exists=false" >> $GITHUB_OUTPUT
+        fi
     - name: Use Node.js ${{ matrix.node-version }}
+      if: steps.detect-package-manager.outputs.exists == 'true'
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+        cache: ${{ steps.detect-package-manager.outputs.cache }}
+    - name: Install dependencies
+      if: steps.detect-package-manager.outputs.exists == 'true'
+      run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
+    - name: Build
+      if: steps.detect-package-manager.outputs.exists == 'true'
+      run: npm run build --if-present
+    - name: Test
+      if: steps.detect-package-manager.outputs.exists == 'true'
+      run: npm test
