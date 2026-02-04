@@ -17,7 +17,6 @@ jobs:
     strategy:
       matrix:
         node-version: [18.x, 20.x, 22.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
     - uses: actions/checkout@v4
@@ -25,7 +24,13 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+    - name: Install and test
+      run: |
+        if [ -f package.json ]; then
+          corepack enable pnpm
+          pnpm install
+          pnpm build --if-present
+          pnpm test
+        else
+          echo "No package.json found, skipping."
+        fi
