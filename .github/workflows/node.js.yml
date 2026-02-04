@@ -3,6 +3,10 @@
 
 name: Node.js CI
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     branches: [ "main" ]
@@ -21,11 +25,41 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - name: Detect package manager
+      id: detect-package-manager
+      run: |
+        if [ -f "${{ github.workspace }}/package-lock.json" ]; then
+          echo "manager=npm" >> $GITHUB_OUTPUT
+          echo "cache=npm" >> $GITHUB_OUTPUT
+          echo "has_package_json=true" >> $GITHUB_OUTPUT
+        elif [ -f "${{ github.workspace }}/yarn.lock" ]; then
+          echo "manager=yarn" >> $GITHUB_OUTPUT
+          echo "cache=yarn" >> $GITHUB_OUTPUT
+          echo "has_package_json=true" >> $GITHUB_OUTPUT
+        elif [ -f "${{ github.workspace }}/pnpm-lock.yaml" ]; then
+          echo "manager=pnpm" >> $GITHUB_OUTPUT
+          echo "cache=pnpm" >> $GITHUB_OUTPUT
+          echo "has_package_json=true" >> $GITHUB_OUTPUT
+        elif [ -f "${{ github.workspace }}/package.json" ]; then
+          echo "manager=npm" >> $GITHUB_OUTPUT
+          echo "cache=" >> $GITHUB_OUTPUT
+          echo "has_package_json=true" >> $GITHUB_OUTPUT
+        else
+          echo "manager=npm" >> $GITHUB_OUTPUT
+          echo "cache=" >> $GITHUB_OUTPUT
+          echo "has_package_json=false" >> $GITHUB_OUTPUT
+        fi
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+        cache: ${{ steps.detect-package-manager.outputs.cache }}
+    - name: Install dependencies
+      if: steps.detect-package-manager.outputs.has_package_json == 'true'
+      run: ${{ steps.detect-package-manager.outputs.manager }} ci || ${{ steps.detect-package-manager.outputs.manager }} install
+    - name: Build
+      if: steps.detect-package-manager.outputs.has_package_json == 'true'
+      run: ${{ steps.detect-package-manager.outputs.manager }} run build --if-present
+    - name: Test
+      if: steps.detect-package-manager.outputs.has_package_json == 'true'
+      run: ${{ steps.detect-package-manager.outputs.manager }} test
