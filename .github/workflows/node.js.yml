@@ -9,10 +9,18 @@ on:
   pull_request:
     branches: [ "main" ]
 
+# Concurrency group ensures that only one build runs at a time per branch/PR.
+# cancel-in-progress: true saves CI minutes by canceling redundant builds when a new push occurs.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
 
     runs-on: ubuntu-latest
+    # timeout-minutes: 15 prevents runaway jobs from consuming excessive CI resources.
+    timeout-minutes: 15
 
     strategy:
       matrix:
