@@ -4,6 +4,9 @@
 #
 name: Deploy Next.js site to Pages
 
+permissions:
+  contents: read
+
 on:
   # Runs on pushes targeting the default branch
   push:
@@ -22,11 +25,14 @@ jobs:
   # Build job
   build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
+    timeout-minutes: 15
+    outputs:
+      manager: ${{ steps.detect-package-manager.outputs.manager }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Detect package manager
         id: detect-package-manager
         run: |
@@ -41,15 +47,19 @@ jobs:
             echo "runner=npx --no-install" >> $GITHUB_OUTPUT
             exit 0
           else
-            echo "Unable to determine package manager"
-            exit 1
+            echo "manager=" >> $GITHUB_OUTPUT
+            echo "command=" >> $GITHUB_OUTPUT
+            echo "runner=" >> $GITHUB_OUTPUT
+            exit 0
           fi
       - name: Setup Node
+        if: steps.detect-package-manager.outputs.manager != ''
         uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: ${{ steps.detect-package-manager.outputs.manager }}
       - name: Setup Pages
+        if: steps.detect-package-manager.outputs.manager != ''
         uses: actions/configure-pages@v5
         with:
           # Automatically inject basePath in your Next.js configuration file and disable
@@ -58,6 +68,7 @@ jobs:
           # You may remove this line if you want to manage the configuration yourself.
           static_site_generator: next
       - name: Restore cache
+        if: steps.detect-package-manager.outputs.manager != ''
         uses: actions/cache@v4
         with:
           path: |
@@ -68,10 +79,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}-
       - name: Install dependencies
+        if: steps.detect-package-manager.outputs.manager != ''
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
       - name: Build with Next.js
+        if: steps.detect-package-manager.outputs.manager != ''
         run: ${{ steps.detect-package-manager.outputs.runner }} next build
       - name: Upload artifact
+        if: steps.detect-package-manager.outputs.manager != ''
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./out
@@ -79,12 +93,14 @@ jobs:
   # Deployment job
   deploy:
     permissions:
+      contents: read
       pages: write
       id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: build
     steps:
       - name: Deploy to GitHub Pages
