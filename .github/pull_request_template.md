@@ -10,8 +10,6 @@
 
 ### 📸 Before/After (if applicable)
 
-<!-- Please include screenshots or a GIF for any visual changes. -->
-
 | Before         | After          |
 | -------------- | -------------- |
 | <!-- image --> | <!-- image --> |
