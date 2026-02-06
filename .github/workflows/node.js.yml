@@ -5,14 +5,27 @@ name: Node.js CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
+    paths-ignore:
+      - "*.md"
+      - ".jules/**"
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
+    paths-ignore:
+      - "*.md"
+      - ".jules/**"
+
+# Concurrency group ensures that only one build runs at a time per branch/PR.
+# cancel-in-progress: true saves CI minutes by canceling redundant builds.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    # timeout-minutes: 15 prevents runaway jobs from consuming excessive CI resources.
+    timeout-minutes: 15
 
     strategy:
       matrix:
@@ -20,12 +33,48 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+      - uses: actions/checkout@v4
+      # Detect package manager helps avoid CI failures in early-stage repositories without lockfiles.
+      # It also enables Bolt to use the fastest available manager (like pnpm) automatically.
+      - name: Detect package manager
+        id: detect-package-manager
+        run: |
+          if [ -f "${{ github.workspace }}/package-lock.json" ]; then
+            echo "manager=npm" >> $GITHUB_OUTPUT
+            echo "cache=npm" >> $GITHUB_OUTPUT
+            echo "command=ci" >> $GITHUB_OUTPUT
+          elif [ -f "${{ github.workspace }}/yarn.lock" ]; then
+            echo "manager=yarn" >> $GITHUB_OUTPUT
+            echo "cache=yarn" >> $GITHUB_OUTPUT
+            echo "command=install" >> $GITHUB_OUTPUT
+          elif [ -f "${{ github.workspace }}/pnpm-lock.yaml" ]; then
+            echo "manager=pnpm" >> $GITHUB_OUTPUT
+            echo "cache=pnpm" >> $GITHUB_OUTPUT
+            echo "command=install" >> $GITHUB_OUTPUT
+          elif [ -f "${{ github.workspace }}/package.json" ]; then
+            echo "manager=npm" >> $GITHUB_OUTPUT
+            echo "cache=" >> $GITHUB_OUTPUT
+            echo "command=install" >> $GITHUB_OUTPUT
+          else
+            echo "manager=" >> $GITHUB_OUTPUT
+            echo "cache=" >> $GITHUB_OUTPUT
+            echo "command=" >> $GITHUB_OUTPUT
+          fi
+      # Enabling pnpm via corepack before setup-node allows the cache mechanism to find pnpm (~10s saving).
+      - name: Setup pnpm
+        if: steps.detect-package-manager.outputs.manager == 'pnpm'
+        run: corepack enable pnpm
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: ${{ steps.detect-package-manager.outputs.cache }}
+      - name: Install dependencies
+        if: steps.detect-package-manager.outputs.manager != ''
+        run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
+      - name: Build
+        if: steps.detect-package-manager.outputs.manager != ''
+        run: ${{ steps.detect-package-manager.outputs.manager }} run build --if-present
+      - name: Test
+        if: steps.detect-package-manager.outputs.manager != ''
+        run: ${{ steps.detect-package-manager.outputs.manager }} test
