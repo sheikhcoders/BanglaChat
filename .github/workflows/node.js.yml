@@ -5,27 +5,54 @@ name: Node.js CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
+    # Optimization: Skip CI for journal changes to save resources.
+    # Note: .md files are NOT ignored to ensure content-driven deployments remain correct.
+    paths-ignore:
+      - ".jules/**"
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
+    # Optimization: Skip CI for journal changes to save resources.
+    paths-ignore:
+      - ".jules/**"
+
+# Optimization: Cancel redundant builds on the same branch to save CI minutes.
+# Estimated impact: Saves 5-10 CI minutes per redundant run.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    # Optimization: Only run build if package.json exists to avoid errors in minimal repos.
+    if: hashFiles('package.json') != ''
+    # Optimization: Set timeout to prevent runaway processes from consuming CI minutes.
+    timeout-minutes: 15
 
     strategy:
       matrix:
-        node-version: [18.x, 20.x, 22.x]
+        node-version: [18, 20, 22]
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+      - uses: actions/checkout@v4
+        with:
+          # Security: Prevent GITHUB_TOKEN from being stored in local git config.
+          persist-credentials: false
+      - name: Detect lockfile
+        id: detect
+        run: |
+          if [ -f "package-lock.json" ]; then
+            echo "cache=npm" >> $GITHUB_OUTPUT
+          else
+            echo "cache=" >> $GITHUB_OUTPUT
+          fi
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: ${{ steps.detect.outputs.cache }}
+      - run: npm ci
+      - run: npm run build --if-present
+      - run: npm test
