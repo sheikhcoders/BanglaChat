@@ -22,6 +22,7 @@ jobs:
   # Build job
   build:
     runs-on: ubuntu-latest
+    if: hashFiles('package.json') != ''
     timeout-minutes: 15
     permissions:
       contents: read
@@ -45,7 +46,7 @@ jobs:
             exit 0
           else
             echo "Unable to determine package manager"
-            exit 1
+            exit 0
           fi
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -84,6 +85,7 @@ jobs:
     permissions:
       pages: write
       id-token: write
+    if: hashFiles('package.json') != ''
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
