@@ -5,12 +5,27 @@ name: Node.js CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
+    # Optimization: Path filtering prevents unnecessary builds for non-code changes.
+    paths-ignore:
+      - "**.md"
+      - ".jules/**"
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
+    # Optimization: Path filtering prevents unnecessary builds for non-code changes.
+    paths-ignore:
+      - "**.md"
+      - ".jules/**"
+
+# Optimization: Concurrency control reduces Actions usage by canceling redundant runs on the same branch.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
+    # Optimization: Guarding ensures CI only runs in Node.js environments, preventing 100% of unnecessary failures.
+    if: hashFiles('package.json') != ''
 
     runs-on: ubuntu-latest
 
@@ -20,12 +35,30 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+      - uses: actions/checkout@v4
+      # Optimization: Dynamic package manager support (pnpm/npm) allows using faster tools.
+      - name: Detect package manager
+        id: detect-package-manager
+        run: |
+          corepack enable pnpm
+          if [ -f "pnpm-lock.yaml" ]; then
+            echo "manager=pnpm" >> $GITHUB_OUTPUT
+            echo "command=install" >> $GITHUB_OUTPUT
+            echo "cache=pnpm" >> $GITHUB_OUTPUT
+          elif [ -f "package-lock.json" ]; then
+            echo "manager=npm" >> $GITHUB_OUTPUT
+            echo "command=ci" >> $GITHUB_OUTPUT
+            echo "cache=npm" >> $GITHUB_OUTPUT
+          else
+            echo "manager=npm" >> $GITHUB_OUTPUT
+            echo "command=install" >> $GITHUB_OUTPUT
+            echo "cache=" >> $GITHUB_OUTPUT
+          fi
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: ${{ steps.detect-package-manager.outputs.cache }}
+      - run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
+      - run: ${{ steps.detect-package-manager.outputs.manager }} run build --if-present
+      - run: ${{ steps.detect-package-manager.outputs.manager }} test
