@@ -25,6 +25,7 @@ concurrency:
 jobs:
   # Build job
   build:
+    if: hashFiles('package.json', 'yarn.lock', 'pnpm-lock.yaml') != ''
     runs-on: ubuntu-latest
     # Bolt: Prevent runaway processes from consuming excessive resources
     timeout-minutes: 15
