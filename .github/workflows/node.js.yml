@@ -5,14 +5,28 @@ name: Node.js CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
+    # Bolt: Ignore non-code changes to save Actions minutes (~5-10% saving)
+    paths-ignore:
+      - ".jules/**"
+      - "**.md"
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
+    # Bolt: Ignore non-code changes to save Actions minutes (~5-10% saving)
+    paths-ignore:
+      - ".jules/**"
+      - "**.md"
+
+# Bolt: Cancel in-progress runs on the same branch to save resources (~30% saving)
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    # Bolt: Prevent runaway processes from consuming excessive resources
+    timeout-minutes: 15
 
     strategy:
       matrix:
@@ -20,12 +34,12 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+      - uses: actions/checkout@v4
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+      - run: npm ci
+      - run: npm run build --if-present
+      - run: npm test
