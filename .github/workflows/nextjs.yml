@@ -8,6 +8,10 @@ on:
   # Runs on pushes targeting the default branch
   push:
     branches: ["main"]
+    # Bolt: Ignore agent memories to save Actions minutes.
+    # We explicitly do NOT ignore .md files to ensure content-driven deployments remain synchronized.
+    paths-ignore:
+      - ".jules/**"
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -21,7 +25,10 @@ concurrency:
 jobs:
   # Build job
   build:
+    if: hashFiles('package.json', 'yarn.lock', 'pnpm-lock.yaml') != ''
     runs-on: ubuntu-latest
+    # Bolt: Prevent runaway processes from consuming excessive resources
+    timeout-minutes: 15
     permissions:
       contents: read
     steps:
@@ -78,6 +85,8 @@ jobs:
 
   # Deployment job
   deploy:
+    # Bolt: Prevent runaway processes from consuming excessive resources
+    timeout-minutes: 15
     permissions:
       pages: write
       id-token: write
