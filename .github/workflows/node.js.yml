@@ -11,6 +11,7 @@ on:
 
 jobs:
   build:
+    if: hashFiles('package-lock.json', 'yarn.lock', 'pnpm-lock.yaml') != ''
     runs-on: ubuntu-latest
 
     strategy:
