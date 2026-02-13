@@ -22,11 +22,14 @@ jobs:
   # Build job
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15 # Protects against resource exhaustion
     permissions:
-      contents: read
+      contents: read # Follows principle of least privilege
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false # Prevents GITHUB_TOKEN from being stored on the runner
       - name: Detect package manager
         id: detect-package-manager
         run: |
@@ -85,6 +88,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    timeout-minutes: 15 # Protects against resource exhaustion
     needs: build
     steps:
       - name: Deploy to GitHub Pages
