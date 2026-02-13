@@ -23,6 +23,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 15 # Protects against resource exhaustion
+    # Only run if a manifest exists to avoid failures in empty repositories
+    if: hashFiles('package.json', 'yarn.lock') != ''
     permissions:
       contents: read # Follows principle of least privilege
     steps:
