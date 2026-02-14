@@ -8,6 +8,8 @@ on:
   # Runs on pushes targeting the default branch
   push:
     branches: ["main"]
+    paths-ignore:
+      - ".jules/**"
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -18,15 +20,26 @@ concurrency:
   group: "pages"
   cancel-in-progress: false
 
+# Set top-level permissions to read-only for the GITHUB_TOKEN to follow the principle of least privilege
+permissions:
+  contents: read
+
 jobs:
   # Build job
   build:
+    # Only run if a package.json exists to avoid CI failures in empty repositories
+    if: hashFiles('package.json') != ''
+    # Enforce a timeout to prevent runaway processes and potential DoS
+    timeout-minutes: 15
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Security hardening: do not persist credentials to prevent token leakage in subsequent steps
+          persist-credentials: false
       - name: Detect package manager
         id: detect-package-manager
         run: |
@@ -78,7 +91,12 @@ jobs:
 
   # Deployment job
   deploy:
+    # Only run if a package.json exists to avoid CI failures in empty repositories
+    if: hashFiles('package.json') != ''
+    # Enforce a timeout to prevent runaway processes and potential DoS
+    timeout-minutes: 15
     permissions:
+      contents: read
       pages: write
       id-token: write
     environment:
