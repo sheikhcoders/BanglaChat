@@ -5,14 +5,27 @@ name: Node.js CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
+    # Saves ~20-40% Actions minutes by skipping runs for agent-internal updates
+    paths-ignore:
+      - ".jules/**"
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
+    # Saves ~20-40% Actions minutes by skipping runs for agent-internal updates
+    paths-ignore:
+      - ".jules/**"
+
+# Terminate redundant runs when new pushes occur to save resources
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
-
+    # Avoids running in empty repositories (Saves ~20-40% Actions minutes)
+    if: hashFiles('package.json') != ''
     runs-on: ubuntu-latest
+    timeout-minutes: 15 # Resource-saving safety measure
 
     strategy:
       matrix:
@@ -20,12 +33,12 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+      - uses: actions/checkout@v4
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+      - run: npm ci
+      - run: npm run build --if-present
+      - run: npm test

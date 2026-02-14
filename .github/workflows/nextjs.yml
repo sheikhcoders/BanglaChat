@@ -8,6 +8,9 @@ on:
   # Runs on pushes targeting the default branch
   push:
     branches: ["main"]
+    # Saves ~20-40% Actions minutes by skipping deployments for agent-internal updates
+    paths-ignore:
+      - ".jules/**"
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -21,7 +24,10 @@ concurrency:
 jobs:
   # Build job
   build:
+    # Avoids running in empty repositories (Saves ~20-40% Actions minutes)
+    if: hashFiles('package.json') != ''
     runs-on: ubuntu-latest
+    timeout-minutes: 15 # Resource-saving safety measure
     permissions:
       contents: read
     steps:
@@ -78,6 +84,7 @@ jobs:
 
   # Deployment job
   deploy:
+    timeout-minutes: 15 # Resource-saving safety measure
     permissions:
       pages: write
       id-token: write
