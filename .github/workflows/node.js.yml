@@ -21,6 +21,8 @@ permissions:
 
 jobs:
   build:
+    # Only run if a package.json exists to avoid CI failures in empty repositories
+    if: hashFiles('package.json') != ''
     # Enforce a timeout to prevent runaway processes and potential DoS
     timeout-minutes: 15
     runs-on: ubuntu-latest
