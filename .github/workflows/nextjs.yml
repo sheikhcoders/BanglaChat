@@ -18,15 +18,26 @@ concurrency:
   group: "pages"
   cancel-in-progress: false
 
+# Set top-level permissions to restrict the GITHUB_TOKEN to read-only access by default.
+permissions:
+  contents: read
+
 jobs:
   # Build job
   build:
+    # Safely prevent the workflow from running in empty repositories.
+    if: hashFiles('package.json', 'package-lock.json', 'yarn.lock') != ''
     runs-on: ubuntu-latest
+    # Enforce a timeout to prevent runaway processes from consuming excessive resources.
+    timeout-minutes: 15
     permissions:
       contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Explicitly disable credential persistence to prevent accidental leakage of the GITHUB_TOKEN.
+          persist-credentials: false
       - name: Detect package manager
         id: detect-package-manager
         run: |
@@ -78,7 +89,10 @@ jobs:
 
   # Deployment job
   deploy:
+    # Enforce a timeout to prevent runaway processes from consuming excessive resources.
+    timeout-minutes: 15
     permissions:
+      contents: read
       pages: write
       id-token: write
     environment:
