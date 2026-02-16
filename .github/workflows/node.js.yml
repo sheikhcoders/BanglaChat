@@ -26,13 +26,18 @@ jobs:
         with:
           persist-credentials: false
       - uses: pnpm/action-setup@v4
+        if: hashFiles('package.json') != ''
         with:
           version: 10
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: "pnpm"
+          # Only enable caching if a lockfile exists to prevent CI failure in empty repos
+          cache: ${{ hashFiles('pnpm-lock.yaml') != '' && 'pnpm' || '' }}
       - run: pnpm install
+        if: hashFiles('package.json') != ''
       - run: pnpm run build --if-present
+        if: hashFiles('package.json') != ''
       - run: pnpm test
+        if: hashFiles('package.json') != ''
