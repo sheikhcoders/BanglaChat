@@ -18,15 +18,23 @@ concurrency:
   group: "pages"
   cancel-in-progress: false
 
+# Set top-level permissions to read-only for security
+permissions:
+  contents: read
+
 jobs:
   # Build job
   build:
+    timeout-minutes: 15
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Disable credential persistence for security (Hardening)
+          persist-credentials: false
       - name: Detect package manager
         id: detect-package-manager
         run: |
@@ -78,7 +86,9 @@ jobs:
 
   # Deployment job
   deploy:
+    timeout-minutes: 15
     permissions:
+      contents: read # Explicitly re-include read access for security (Hardening)
       pages: write
       id-token: write
     environment:
