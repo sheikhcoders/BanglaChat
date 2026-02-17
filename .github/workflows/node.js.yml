@@ -29,10 +29,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Use Node.js ${{ matrix.node-version }}
+        # Skip setup and cache if package.json is missing to avoid failure in empty repos.
+        if: hashFiles('package.json') != ''
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: "npm"
-      - run: npm ci
-      - run: npm run build --if-present
-      - run: npm test
+          # Only enable cache if a lock file is present.
+          cache: ${{ hashFiles('package-lock.json', 'yarn.lock', 'pnpm-lock.yaml') != '' && 'npm' || '' }}
+      - name: Install dependencies
+        if: hashFiles('package.json') != ''
+        run: npm ci
+      - name: Build
+        if: hashFiles('package.json') != ''
+        run: npm run build --if-present
+      - name: Test
+        if: hashFiles('package.json') != ''
+        run: npm test
