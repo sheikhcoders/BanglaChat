@@ -1,0 +1,3 @@
+## 2026-02-17 - CI Path-Filtering vs. Required Status Checks
+**Learning:** Aggressive path filtering (like `paths-ignore: ['**.md']`) in CI workflows that serve as required status checks can block Pull Requests from merging if the ignored files are the only ones changed. GitHub considers the check as "Expected" rather than "Skipped/Success" in some configurations, preventing the merge.
+**Action:** Avoid using broad `paths-ignore` (especially for `.md` or internal agent notes) in core CI workflows like `node.js.yml` if they are likely to be required checks. Apply these filters only to deployment-specific or secondary workflows.
