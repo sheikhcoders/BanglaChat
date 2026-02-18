@@ -30,11 +30,26 @@ jobs:
         with:
           # Security hardening: disable credential persistence
           persist-credentials: false
+      - name: Detect package manifest
+        id: detect
+        run: |
+          if [ -f "package-lock.json" ] || [ -f "package.json" ]; then
+            echo "found=true" >> $GITHUB_OUTPUT
+          else
+            echo "found=false" >> $GITHUB_OUTPUT
+          fi
       - name: Use Node.js ${{ matrix.node-version }}
+        if: steps.detect.outputs.found == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
-      - run: npm ci
-      - run: npm run build --if-present
-      - run: npm test
+      - name: Install dependencies
+        if: steps.detect.outputs.found == 'true'
+        run: npm ci
+      - name: Build
+        if: steps.detect.outputs.found == 'true'
+        run: npm run build --if-present
+      - name: Test
+        if: steps.detect.outputs.found == 'true'
+        run: npm test
