@@ -27,7 +27,15 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: "pnpm"
-      - run: pnpm install
-      - run: pnpm build --if-present
-      - run: pnpm test
+          cache: ${{ hashFiles('pnpm-lock.yaml') != '' && 'pnpm' || '' }}
+      - name: Check formatting
+        run: pnpm dlx prettier --check .
+      - name: Install dependencies
+        run: pnpm install
+        if: hashFiles('package.json') != ''
+      - name: Build
+        run: pnpm build --if-present
+        if: hashFiles('package.json') != ''
+      - name: Test
+        run: pnpm test --if-present
+        if: hashFiles('package.json') != ''
