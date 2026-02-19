@@ -18,15 +18,23 @@ concurrency:
   group: "pages"
   cancel-in-progress: false
 
+# Secure defaults for the GITHUB_TOKEN
+permissions:
+  contents: read
+
 jobs:
   # Build job
   build:
+    timeout-minutes: 15
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Prevent token persistence on the runner
+          persist-credentials: false
       - name: Detect package manager
         id: detect-package-manager
         run: |
@@ -78,6 +86,7 @@ jobs:
 
   # Deployment job
   deploy:
+    timeout-minutes: 15
     permissions:
       pages: write
       id-token: write
