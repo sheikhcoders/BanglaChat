@@ -12,6 +12,10 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+# Hardening: Set restrictive default permissions
+permissions:
+  contents: read
+
 # Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
 # However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
 concurrency:
@@ -21,12 +25,17 @@ concurrency:
 jobs:
   # Build job
   build:
+    # Hardening: Add timeout
+    timeout-minutes: 15
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
-      - name: Checkout
+      - # Hardening: Disable credential persistence
+        name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Detect package manager
         id: detect-package-manager
         run: |
@@ -78,7 +87,10 @@ jobs:
 
   # Deployment job
   deploy:
+    # Hardening: Add timeout
+    timeout-minutes: 15
     permissions:
+      contents: read
       pages: write
       id-token: write
     environment:
