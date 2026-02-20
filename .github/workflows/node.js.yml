@@ -34,11 +34,22 @@ jobs:
         uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - name: Detect package manifest
+        id: detect
+        run: |
+          if [ -f "package.json" ]; then
+            echo "found=true" >> $GITHUB_OUTPUT
+          else
+            echo "found=false" >> $GITHUB_OUTPUT
+          fi
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: "npm"
+          cache: ${{ steps.detect.outputs.found == 'true' && 'npm' || '' }}
       - run: npm ci
+        if: steps.detect.outputs.found == 'true'
       - run: npm run build --if-present
+        if: steps.detect.outputs.found == 'true'
       - run: npm test
+        if: steps.detect.outputs.found == 'true'
