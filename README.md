@@ -3,21 +3,11 @@
 A modern, accessible chat platform built for the global Bengali-speaking community.
 বিশ্বজুড়ে বাংলাভাষী সম্প্রদায়ের জন্য একটি আধুনিক এবং সহজলভ্য চ্যাট প্ল্যাটফর্ম।
 
-## 🎯 Our Mission | আমাদের লক্ষ্য
+## 🎯 Our Mission & Accessibility | আমাদের লক্ষ্য এবং অ্যাক্সেসিবিলিটি
 
-BanglaChat aims to provide a seamless and inclusive communication experience, prioritizing accessibility and ease of use for Bengali speakers everywhere.
+BanglaChat aims to provide a seamless and inclusive communication experience, prioritizing accessibility and ease of use for Bengali speakers everywhere. We focus on bilingual support, screen readers, keyboard navigation, and high contrast.
 
-বাংলাচ্যাট-এর লক্ষ্য হলো সর্বত্র বাংলাভাষীদের জন্য অ্যাক্সেসিবিলিটি এবং ব্যবহারের সহজতাকে প্রাধান্য দিয়ে একটি নিরবচ্ছিন্ন এবং অন্তর্ভুক্তিমূলক যোগাযোগের অভিজ্ঞতা প্রদান করা।
-
-## ♿ Accessibility First | অ্যাক্সেসিবিলিটি সবার আগে
-
-We believe that technology should be accessible to everyone. Our focus includes:
-আমরা বিশ্বাস করি যে প্রযুক্তি সবার জন্য সহজলভ্য হওয়া উচিত। আমাদের ফোকাস অন্তর্ভুক্ত:
-
-- **Bilingual Support:** Seamless switching between English and Bengali.
-- **Screen Reader Friendly:** Semantic HTML and proper ARIA labels.
-- **Keyboard Navigation:** Full support for users who don't use a mouse.
-- **High Contrast:** Readable text for all visual abilities.
+বাংলাচ্যাট-এর লক্ষ্য হলো সর্বত্র বাংলাভাষীদের জন্য অ্যাক্সেসিবিলিটি এবং ব্যবহারের সহজতাকে প্রাধান্য দিয়ে একটি নিরবচ্ছিন্ন এবং অন্তর্ভুক্তিমূলক যোগাযোগের অভিজ্ঞতা প্রদান করা। আমরা দ্বিভাষিক সমর্থন, স্ক্রিন রিডার, কীবোর্ড নেভিগেশন এবং উচ্চ বৈপরীত্যের ওপর ফোকাস করি।
 
 ## 🚀 Getting Started
 
