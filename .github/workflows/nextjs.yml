@@ -18,15 +18,20 @@ concurrency:
   group: "pages"
   cancel-in-progress: false
 
+# Declare default permissions as read only.
+permissions:
+  contents: read
+
 jobs:
   # Build job
   build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
+    timeout-minutes: 15 # Prevent hanging processes from consuming resources
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false # Security: do not persist GITHUB_TOKEN in local git config
       - name: Detect package manager
         id: detect-package-manager
         run: |
@@ -79,8 +84,10 @@ jobs:
   # Deployment job
   deploy:
     permissions:
+      contents: read # Explicitly include contents: read when overriding permissions
       pages: write
       id-token: write
+    timeout-minutes: 15 # Prevent hanging processes from consuming resources
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
