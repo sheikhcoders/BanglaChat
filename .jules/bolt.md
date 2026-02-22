@@ -1,0 +1,3 @@
+## 2025-02-22 - CI Performance for Uninitialized Repositories
+**Learning:** Early-stage repositories often waste Actions minutes by running complete CI pipelines that are destined to fail or do nothing because of missing manifests (package.json). Implementing a "bootstrap-aware" detection step that outputs a `found` flag allows subsequent expensive steps to be skipped, saving significant resources.
+**Action:** Always include a lightweight detection step in CI workflows for new projects, and use job-level and step-level `if` guards to skip execution until the repository is initialized.
