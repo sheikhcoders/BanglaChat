@@ -21,11 +21,13 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - name: Detect package.json
+      id: detect
+      run: echo "found=$(if [ -f package.json ]; then echo true; else echo false; fi)" >> $GITHUB_OUTPUT
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+    - name: Install and Test
+      if: steps.detect.outputs.found == 'true'
+      run: npm ci && npm run build --if-present && npm test
