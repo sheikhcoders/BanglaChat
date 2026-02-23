@@ -25,11 +25,26 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - name: Detect package manifest
+        id: detect
+        run: |
+          if [ -f "package.json" ]; then
+            echo "found=true" >> $GITHUB_OUTPUT
+          elif [ -d "src" ] || [ -d "app" ] || [ -d "pages" ] || [ -d "components" ]; then
+            echo "Source directories found but no package.json!"
+            exit 1
+          else
+            echo "found=false" >> $GITHUB_OUTPUT
+          fi
       - name: Use Node.js ${{ matrix.node-version }}
+        if: steps.detect.outputs.found == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
       - run: npm ci
+        if: steps.detect.outputs.found == 'true'
       - run: npm run build --if-present
+        if: steps.detect.outputs.found == 'true'
       - run: npm test
+        if: steps.detect.outputs.found == 'true'
