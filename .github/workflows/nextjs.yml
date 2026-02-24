@@ -24,9 +24,12 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Detect package manager
         id: detect-package-manager
         run: |
@@ -81,6 +84,7 @@ jobs:
     permissions:
       pages: write
       id-token: write
+    timeout-minutes: 10
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
