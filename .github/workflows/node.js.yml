@@ -5,13 +5,19 @@ name: Node.js CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
+    paths-ignore: [".jules/**"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
+    paths-ignore: [".jules/**"]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   build:
-
+    timeout-minutes: 20
     runs-on: ubuntu-latest
 
     strategy:
@@ -20,12 +26,25 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+      - uses: actions/checkout@v4
+      - name: Detect PM
+        id: pm
+        run: |
+          if [ -f pnpm-lock.yaml ]; then echo "m=pnpm" >> $GITHUB_OUTPUT; echo "c=pnpm" >> $GITHUB_OUTPUT
+          elif [ -f yarn.lock ]; then echo "m=yarn" >> $GITHUB_OUTPUT; echo "c=yarn" >> $GITHUB_OUTPUT
+          elif [ -f package-lock.json ]; then echo "m=npm" >> $GITHUB_OUTPUT; echo "c=npm" >> $GITHUB_OUTPUT
+          else echo "m=npm" >> $GITHUB_OUTPUT; echo "c=" >> $GITHUB_OUTPUT; fi
+      - uses: pnpm/action-setup@v4
+        if: steps.pm.outputs.m == 'pnpm'
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: ${{ steps.pm.outputs.c }}
+      - run: ${{ steps.pm.outputs.m }} install
+        if: hashFiles('package.json') != ''
+      - run: ${{ steps.pm.outputs.m }} run build --if-present
+        if: hashFiles('package.json') != ''
+      - run: ${{ steps.pm.outputs.m }} test
+        if: hashFiles('package.json') != ''
