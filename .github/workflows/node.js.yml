@@ -1,5 +1,5 @@
 # This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
+# For more information see: https://docs.github.com/en/about/releases/
 
 name: Node.js CI
 
@@ -27,14 +27,56 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - name: Detect package manager
+        id: detect
+        run: |
+          if [ -f "yarn.lock" ]; then
+            echo "manager=yarn" >> $GITHUB_OUTPUT
+            echo "command=install" >> $GITHUB_OUTPUT
+            echo "runner=yarn" >> $GITHUB_OUTPUT
+            echo "found=true" >> $GITHUB_OUTPUT
+            echo "cache=yarn" >> $GITHUB_OUTPUT
+          elif [ -f "pnpm-lock.yaml" ]; then
+            echo "manager=pnpm" >> $GITHUB_OUTPUT
+            echo "command=install" >> $GITHUB_OUTPUT
+            echo "runner=pnpm" >> $GITHUB_OUTPUT
+            echo "found=true" >> $GITHUB_OUTPUT
+            echo "cache=pnpm" >> $GITHUB_OUTPUT
+          elif [ -f "package.json" ]; then
+            echo "manager=npm" >> $GITHUB_OUTPUT
+            echo "command=ci" >> $GITHUB_OUTPUT
+            echo "runner=npm" >> $GITHUB_OUTPUT
+            echo "found=true" >> $GITHUB_OUTPUT
+            if [ -f "package-lock.json" ]; then
+              echo "cache=npm" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "found=false" >> $GITHUB_OUTPUT
+            if [ -d "src" ] || [ -d "app" ] || [ -d "pages" ] || [ -d "components" ]; then
+              echo "Error: Source directories found but no package.json"
+              exit 1
+            fi
+          fi
+      - name: Install pnpm
+        if: steps.detect.outputs.manager == 'pnpm'
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: "npm"
-      - run: npm ci
-      - run: npm run build --if-present
-      - run: npm test
+          cache: ${{ steps.detect.outputs.cache }}
+      - name: Install dependencies
+        if: steps.detect.outputs.found == 'true'
+        run: ${{ steps.detect.outputs.manager }} ${{ steps.detect.outputs.command }}
+      - name: Build
+        if: steps.detect.outputs.found == 'true'
+        run: ${{ steps.detect.outputs.runner }} run build --if-present
+      - name: Test
+        if: steps.detect.outputs.found == 'true'
+        run: ${{ steps.detect.outputs.runner }} test
