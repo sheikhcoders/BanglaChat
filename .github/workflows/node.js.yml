@@ -1,18 +1,26 @@
 # This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
+# For more information see: https://docs.github.com/en/about/releases/
 
 name: Node.js CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
+    paths-ignore: [".jules/**"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
+    paths-ignore: [".jules/**"]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   build:
-
+    timeout-minutes: 20
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     strategy:
       matrix:
@@ -20,12 +28,58 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Detect package manager
+        id: detect
+        run: |
+          if [ -f "pnpm-lock.yaml" ]; then
+            echo "manager=pnpm" >> $GITHUB_OUTPUT
+            echo "command=install" >> $GITHUB_OUTPUT
+            echo "found=true" >> $GITHUB_OUTPUT
+          elif [ -f "yarn.lock" ]; then
+            echo "manager=yarn" >> $GITHUB_OUTPUT
+            echo "command=install" >> $GITHUB_OUTPUT
+            echo "found=true" >> $GITHUB_OUTPUT
+          elif [ -f "package-lock.json" ]; then
+            echo "manager=npm" >> $GITHUB_OUTPUT
+            echo "command=ci" >> $GITHUB_OUTPUT
+            echo "found=true" >> $GITHUB_OUTPUT
+          elif [ -f "package.json" ]; then
+            echo "manager=npm" >> $GITHUB_OUTPUT
+            echo "command=install" >> $GITHUB_OUTPUT
+            echo "found=true" >> $GITHUB_OUTPUT
+          elif [ -d "src" ] || [ -d "app" ] || [ -d "pages" ] || [ -d "components" ]; then
+            echo "Error: Source code found but no package manifest (package.json) exists."
+            exit 1
+          else
+            echo "found=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup pnpm
+        if: steps.detect.outputs.manager == 'pnpm'
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        if: steps.detect.outputs.found == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: ${{ steps.detect.outputs.manager }}
+
+      - name: Install dependencies
+        if: steps.detect.outputs.found == 'true'
+        run: ${{ steps.detect.outputs.manager }} ${{ steps.detect.outputs.command }}
+
+      - name: Build
+        if: steps.detect.outputs.found == 'true'
+        run: ${{ steps.detect.outputs.manager }} run build --if-present
+
+      - name: Test
+        if: steps.detect.outputs.found == 'true'
+        run: ${{ steps.detect.outputs.manager }} test
