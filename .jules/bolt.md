@@ -1,0 +1,3 @@
+## 2025-02-26 - CI Efficiency and Resource Conservation
+**Learning:** GitHub Actions default behavior of running multiple workflows for every push to any branch can lead to significant resource waste. Using path-based filtering (`paths-ignore`) prevents CI from firing on documentation/journal-only changes, and concurrency groups with conditional `cancel-in-progress` ensure that only the latest commit on a feature branch is being tested, while preserving history on the main branch.
+**Action:** Always include concurrency groups and path filtering in workflow definitions to optimize CI feedback loops and reduce runner cost/usage.
