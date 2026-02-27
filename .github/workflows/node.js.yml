@@ -5,27 +5,72 @@ name: Node.js CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
 
 jobs:
-  build:
-
+  detect:
     runs-on: ubuntu-latest
+    outputs:
+      found: ${{ steps.detect.outputs.found }}
+      cache: ${{ steps.detect.outputs.cache }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Detect environment
+        id: detect
+        run: |
+          if [ -f "package.json" ]; then
+            echo "found=true" >> $GITHUB_OUTPUT
+            if [ -f "pnpm-lock.yaml" ]; then
+              echo "cache=pnpm" >> $GITHUB_OUTPUT
+            elif [ -f "package-lock.json" ]; then
+              echo "cache=npm" >> $GITHUB_OUTPUT
+            elif [ -f "yarn.lock" ]; then
+              echo "cache=yarn" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "found=false" >> $GITHUB_OUTPUT
+            # Fail loudly if code directories exist but no package.json
+            if [ -d "src" ] || [ -d "app" ] || [ -d "pages" ] || [ -d "components" ]; then
+               echo "ERROR: Source directories found but no package.json manifest!"
+               exit 1
+            fi
+          fi
 
+  build:
+    needs: detect
+    if: needs.detect.outputs.found == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
     strategy:
       matrix:
         node-version: [18.x, 20.x, 22.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+      - uses: actions/checkout@v4
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: ${{ needs.detect.outputs.cache || '' }}
+      - name: Install dependencies
+        run: |
+          if [ "${{ needs.detect.outputs.cache }}" == "pnpm" ]; then
+            corepack enable && pnpm install --frozen-lockfile
+          elif [ "${{ needs.detect.outputs.cache }}" == "npm" ]; then
+            npm ci
+          elif [ "${{ needs.detect.outputs.cache }}" == "yarn" ]; then
+            yarn install --frozen-lockfile
+          else
+            npm install
+          fi
+      - run: npm run build --if-present
+      - run: npm test
