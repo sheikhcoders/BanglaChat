@@ -5,14 +5,21 @@ name: Node.js CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     strategy:
       matrix:
@@ -20,12 +27,33 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Detect package manifest
+        id: detect
+        run: |
+          if [ -f "package.json" ]; then
+            echo "found=true" >> $GITHUB_OUTPUT
+          else
+            echo "found=false" >> $GITHUB_OUTPUT
+            if [ -d "src" ] || [ -d "app" ] || [ -d "pages" ] || [ -d "components" ]; then
+              echo "Error: Source-related directories found but no package.json manifest."
+              exit 1
+            fi
+          fi
+      - name: Use Node.js ${{ matrix.node-version }}
+        if: steps.detect.outputs.found == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+      - name: Install dependencies
+        if: steps.detect.outputs.found == 'true'
+        run: npm ci
+      - name: Build source
+        if: steps.detect.outputs.found == 'true'
+        run: npm run build --if-present
+      - name: Run tests
+        if: steps.detect.outputs.found == 'true'
+        run: npm test
