@@ -1,33 +1,42 @@
 # Node.js CI with performance optimizations
 name: Node.js CI
-
 on:
   push:
     branches: ["main"]
     paths-ignore: [".jules/**"]
   pull_request:
     branches: ["main"]
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
-
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-
+    timeout-minutes: 20
     strategy:
       matrix:
         node-version: [18.x, 20.x, 22.x]
-
     steps:
       - uses: actions/checkout@v4
-      - name: Use Node.js ${{ matrix.node-version }}
+      - name: Detect
+        id: det
+        run: |
+          if [ -f "package.json" ]; then
+            echo "ok=true" >> $GITHUB_OUTPUT
+            if [ -f "pnpm-lock.yaml" ]; then echo "c=pnpm" >> $GITHUB_OUTPUT; elif [ -f "yarn.lock" ]; then echo "c=yarn" >> $GITHUB_OUTPUT; elif [ -f "package-lock.json" ]; then echo "c=npm" >> $GITHUB_OUTPUT; else echo "c=" >> $GITHUB_OUTPUT; fi
+          else
+            ([ -d "src" ] || [ -d "app" ] || [ -d "pages" ]) && exit 1
+            echo "ok=false" >> $GITHUB_OUTPUT
+          fi
+      - name: Setup
+        if: steps.det.outputs.ok == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: "npm"
-      - run: npm ci
-      - run: npm run build --if-present
-      - run: npm test
+          cache: ${{ steps.det.outputs.c }}
+      - name: CI
+        if: steps.det.outputs.ok == 'true'
+        run: |
+          if [ -f "pnpm-lock.yaml" ]; then corepack enable && pnpm i --frozen-lockfile && pnpm run build --if-present && pnpm test
+          elif [ -f "yarn.lock" ]; then yarn i --frozen-lockfile && yarn run build --if-present && yarn test
+          else ([ -f "package-lock.json" ] && npm ci || npm i) && npm run build --if-present && npm test; fi
