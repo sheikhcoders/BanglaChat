@@ -5,14 +5,20 @@ name: Node.js CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
 
     strategy:
       matrix:
@@ -20,12 +26,44 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Detect package manager
+        id: detect
+        run: |
+          if [ -f "package-lock.json" ]; then
+            echo "found=true" >> $GITHUB_OUTPUT
+            echo "cache=npm" >> $GITHUB_OUTPUT
+          elif [ -f "pnpm-lock.yaml" ]; then
+            echo "found=true" >> $GITHUB_OUTPUT
+            echo "cache=pnpm" >> $GITHUB_OUTPUT
+          elif [ -f "package.json" ]; then
+            echo "found=true" >> $GITHUB_OUTPUT
+            echo "cache=" >> $GITHUB_OUTPUT
+          else
+            echo "found=false" >> $GITHUB_OUTPUT
+            if [ -d "src" ] || [ -d "app" ] || [ -d "pages" ] || [ -d "components" ]; then
+              echo "Error: Source code found but no package manifest"
+              exit 1
+            fi
+          fi
+      - name: Use Node.js ${{ matrix.node-version }}
+        if: steps.detect.outputs.found == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: ${{ steps.detect.outputs.cache }}
+      - name: Install pnpm
+        if: steps.detect.outputs.cache == 'pnpm'
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - run: npm ci
+        if: steps.detect.outputs.cache == 'npm'
+      - run: pnpm install --frozen-lockfile
+        if: steps.detect.outputs.cache == 'pnpm'
+      - run: npm run build --if-present
+        if: steps.detect.outputs.found == 'true'
+      - run: npm test
+        if: steps.detect.outputs.found == 'true'
