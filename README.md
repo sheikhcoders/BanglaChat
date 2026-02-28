@@ -1,4 +1,4 @@
-# <span aria-hidden="true">💬</span> BanglaChat | বাংলাচ্যাট 🎨
+# <span aria-hidden="true">💬</span> BanglaChat | বাংলাচ্যাট <span aria-hidden="true">🎨</span>
 
 A modern, accessible chat platform built for the Bengali-speaking community.
 
