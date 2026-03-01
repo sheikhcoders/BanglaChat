@@ -1,31 +1,75 @@
 # This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
+# For more information see: https://docs.github.com/en/about/releases/
 
 name: Node.js CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     strategy:
       matrix:
         node-version: [18.x, 20.x, 22.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Detect package manager
+        id: detect
+        run: |
+          if [ -f "${{ github.workspace }}/package.json" ]; then
+            echo "found=true" >> $GITHUB_OUTPUT
+            if [ -f "${{ github.workspace }}/package-lock.json" ]; then
+              echo "cache=npm" >> $GITHUB_OUTPUT
+              echo "command=npm ci" >> $GITHUB_OUTPUT
+              echo "runner=npm" >> $GITHUB_OUTPUT
+            elif [ -f "${{ github.workspace }}/yarn.lock" ]; then
+              echo "cache=yarn" >> $GITHUB_OUTPUT
+              echo "command=yarn install" >> $GITHUB_OUTPUT
+              echo "runner=yarn" >> $GITHUB_OUTPUT
+            else
+              echo "cache=" >> $GITHUB_OUTPUT
+              echo "command=npm install" >> $GITHUB_OUTPUT
+              echo "runner=npm" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "found=false" >> $GITHUB_OUTPUT
+            echo "cache=" >> $GITHUB_OUTPUT
+            echo "command=echo No package.json found" >> $GITHUB_OUTPUT
+            echo "runner=echo" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        if: steps.detect.outputs.found == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: ${{ steps.detect.outputs.cache }}
+
+      - name: Install dependencies
+        if: steps.detect.outputs.found == 'true'
+        run: ${{ steps.detect.outputs.command }}
+
+      - name: Build
+        if: steps.detect.outputs.found == 'true'
+        run: ${{ steps.detect.outputs.runner }} run build --if-present
+
+      - name: Test
+        if: steps.detect.outputs.found == 'true'
+        run: ${{ steps.detect.outputs.runner }} test
