@@ -9,7 +9,6 @@ on:
   pull_request:
     branches: ["main"]
 
-# BOLT OPTIMIZATION: Concurrency control saves resources by canceling redundant runs.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
@@ -25,35 +24,31 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
-      - name: Detect package manager
+      - name: Detect environment
         id: detect
         run: |
-          if [ -f "pnpm-lock.yaml" ]; then
-            echo "manager=pnpm" >> $GITHUB_OUTPUT
-          else
-            echo "manager=npm" >> $GITHUB_OUTPUT
-          fi
+          [ -f "package.json" ] && echo found=true >> $GITHUB_OUTPUT || echo found=false >> $GITHUB_OUTPUT
+          [ -f "pnpm-lock.yaml" ] && echo cache=pnpm >> $GITHUB_OUTPUT || echo cache=npm >> $GITHUB_OUTPUT
+          ([ -f "pnpm-lock.yaml" ] || [ -f "package-lock.json" ] || [ -f "yarn.lock" ]) || echo cache= >> $GITHUB_OUTPUT
 
       - name: Setup pnpm
-        if: steps.detect.outputs.manager == 'pnpm'
+        if: steps.detect.outputs.cache == 'pnpm'
         uses: pnpm/action-setup@v4
 
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: ${{ steps.detect.outputs.manager }}
+          cache: ${{ steps.detect.outputs.cache }}
 
-      - name: Install dependencies
+      - name: CI Steps
+        if: steps.detect.outputs.found == 'true'
         run: |
-          if [ "${{ steps.detect.outputs.manager }}" == "pnpm" ]; then
-            pnpm install --frozen-lockfile
+          if [ "${{ steps.detect.outputs.cache }}" == "pnpm" ]; then
+            pnpm install --frozen-lockfile && pnpm run build --if-present && pnpm test
           else
-            npm ci
+            npm ci && npm run build --if-present && npm test
           fi
-
-      - name: Build and Test
-        run: |
-          ${{ steps.detect.outputs.manager }} run build --if-present
-          ${{ steps.detect.outputs.manager }} test
