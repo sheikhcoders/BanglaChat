@@ -1,4 +1,4 @@
-# BanglaChat <span aria-hidden="true">🇧🇩</span>
+# BanglaChat <span role="img" aria-label="Bangladesh flag">🇧🇩</span>
 
 Welcome to **BanglaChat**, an open-source project dedicated to making AI-powered communication accessible and intuitive for the Bengali-speaking community.
 
@@ -20,5 +20,5 @@ BanglaChat is a specialized platform designed to bridge the gap between advanced
 
 ---
 
-*Made with <span aria-hidden="true">❤️</span> for the Bengali community.*
+*Made with <span role="img" aria-label="love">❤️</span> for the Bengali community.*
 *বাংলাভাষী সম্প্রদায়ের জন্য ভালোবাসার সাথে তৈরি।*
