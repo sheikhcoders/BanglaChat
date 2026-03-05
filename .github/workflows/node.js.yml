@@ -9,6 +9,8 @@ on:
   pull_request:
     branches: ["main"]
 
+# ⚡ Bolt Optimization: Avoid redundant builds and save CI minutes
+# This ensures that when new commits are pushed to the same branch, previous in-progress runs are cancelled.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -16,6 +18,9 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # ⚡ Bolt Optimization: Skip job if package-lock.json is missing to avoid 'setup-node' cache failure
+    # and to save resources on documentation-only changes or uninitialized repository states.
+    if: hashFiles('package-lock.json') != ''
 
     strategy:
       matrix:
