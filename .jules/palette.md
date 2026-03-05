@@ -1,0 +1,8 @@
+# Palette UX Journal 🎨
+
+This journal tracks critical UX and accessibility learnings for the BanglaChat project.
+
+## 2026-03-05 - Initializing UX Foundation
+
+**Learning:** For an open-source project targeting a specific linguistic community (Bengali), the repository itself acts as the primary user interface for developers and contributors. Accessibility and localization should start at the documentation level.
+**Action:** Implement bilingual README with accessibility-focused markers.
