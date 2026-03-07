@@ -5,13 +5,23 @@ name: Node.js CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
+    # ⚡ Bolt: Skip CI when only journals/documentation are updated
+    paths-ignore:
+      - ".jules/**"
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
+    # ⚡ Bolt: Skip CI when only journals/documentation are updated
+    paths-ignore:
+      - ".jules/**"
+
+# ⚡ Bolt: Cancel in-progress runs for the same workflow/branch to save CI minutes
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     strategy:
@@ -20,12 +30,31 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+      - uses: actions/checkout@v4
+      # ⚡ Bolt: Check if the repository is initialized to avoid failing on empty repositories.
+      # If package.json is missing, it's a "cold start" and we stop early to save resources.
+      - name: Bootstrap Guard
+        id: guard
+        run: |
+          if [ ! -f "package.json" ]; then
+            echo "::notice title=Bootstrap Guard::Repository is uninitialized (missing package.json). Skipping CI to save resources."
+            echo "initialized=false" >> $GITHUB_OUTPUT
+          else
+            echo "initialized=true" >> $GITHUB_OUTPUT
+          fi
+      - name: Use Node.js ${{ matrix.node-version }}
+        if: steps.guard.outputs.initialized == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          # ⚡ Bolt: Only enable cache if package-lock.json exists, otherwise setup-node fails
+          cache: ${{ hashFiles('package-lock.json') != '' && 'npm' || '' }}
+      - name: Install dependencies
+        if: steps.guard.outputs.initialized == 'true'
+        run: npm ci
+      - name: Build
+        if: steps.guard.outputs.initialized == 'true'
+        run: npm run build --if-present
+      - name: Test
+        if: steps.guard.outputs.initialized == 'true'
+        run: npm test
