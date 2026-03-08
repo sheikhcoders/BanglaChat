@@ -1,0 +1,3 @@
+## 2026-03-07 - Bootstrap Guard for CI Efficiency
+**Learning:** In uninitialized repositories, GitHub Actions' `actions/setup-node` with `cache: 'npm'` fails because it cannot find a lockfile. This causes unnecessary failure signals and wastes CI minutes. A job-level `if: hashFiles(...)` condition masks errors, which is discouraged.
+**Action:** Use a "Bootstrap Guard" step that outputs an `initialized` boolean. Subsequent steps use this boolean in their own `if` conditions. This allows the job to complete gracefully with a notice on uninitialized repos while still failing on legitimate issues in initialized repos.
