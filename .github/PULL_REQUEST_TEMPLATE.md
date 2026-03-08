@@ -10,7 +10,6 @@
 - [ ] Keyboard navigation support / কীবোর্ড নেভিগেশন সাপোর্ট
 - [ ] Sufficient color contrast / পর্যাপ্ত কালার কন্ট্রাস্ট
 - [ ] Bilingual content (English & Bengali) / দ্বিভাষিক কন্টেন্ট (ইংরেজি এবং বাংলা)
-- [ ] Changes are under 50 lines / পরিবর্তন ৫০ লাইনের নিচে
 
 ## Visuals / ভিজ্যুয়াল
 
