@@ -1,8 +1,7 @@
 # BanglaChat <span role="img" aria-label="Bangladesh flag">🇧🇩</span>
 
-Welcome to **BanglaChat** - an open-source project dedicated to making AI-powered communication accessible and intuitive for the Bengali-speaking community.
-
-বাংলাচ্যাটে (BanglaChat) আপনাকে স্বাগতম - একটি ওপেন সোর্স প্রজেক্ট যা বাংলাভাষী সম্প্রদায়ের জন্য এআই-চালিত যোগাযোগকে সহজ এবং বোধগম্য করার জন্য নিবেদিত।
+Welcome to **BanglaChat** - making AI communication accessible for the Bengali community.
+বাংলাচ্যাটে আপনাকে স্বাগতম - বাংলাভাষীদের জন্য এআই যোগাযোগ সহজ করার একটি প্রজেক্ট।
 
 ---
 
