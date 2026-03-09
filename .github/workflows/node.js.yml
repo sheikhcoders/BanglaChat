@@ -5,14 +5,26 @@ name: Node.js CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
+    # Optimization: Skip CI when only internal agent documentation is updated
+    paths-ignore:
+      - ".jules/**"
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
+    # Optimization: Skip CI when only internal agent documentation is updated
+    paths-ignore:
+      - ".jules/**"
+
+# Optimization: Cancel redundant runs on the same branch to save CI minutes
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    # Optimization: Prevent hung processes from wasting runner time
+    timeout-minutes: 15
 
     strategy:
       matrix:
@@ -20,12 +32,13 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+      - uses: actions/checkout@v4
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          # Optimization: Only attempt caching if a lockfile exists to avoid initialization overhead
+          cache: ${{ hashFiles('package-lock.json') != '' && 'npm' || '' }}
+      - run: npm ci
+      - run: npm run build --if-present
+      - run: npm test
