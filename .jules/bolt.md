@@ -1,0 +1,3 @@
+## 2025-12-11 - CI Resource Optimization in Minimal Repositories
+**Learning:** In the early bootstrap phase of a project, CI workflows often lack essential resource-saving configurations like concurrency controls and path-based filtering. This leads to redundant builds and wasted CI minutes, especially when multiple agents or contributors are making small, rapid changes to documentation or configuration.
+**Action:** Always implement `concurrency` groups with `cancel-in-progress: true` and `paths-ignore` for non-code directories (like `.jules/`) in the initial CI setup to ensure efficient resource usage and faster feedback loops.
