@@ -8,6 +8,9 @@ on:
   # Runs on pushes targeting the default branch
   push:
     branches: ["main"]
+    paths-ignore:
+      - ".jules/**"
+      - "README.md"
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -41,14 +44,16 @@ jobs:
             echo "runner=npx --no-install" >> $GITHUB_OUTPUT
             exit 0
           else
-            echo "Unable to determine package manager"
-            exit 1
+            echo "manager=" >> $GITHUB_OUTPUT
+            echo "command=" >> $GITHUB_OUTPUT
+            echo "runner=" >> $GITHUB_OUTPUT
+            exit 0
           fi
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: ${{ steps.detect-package-manager.outputs.manager }}
+          cache: ${{ steps.detect-package-manager.outputs.manager || '' }}
       - name: Setup Pages
         uses: actions/configure-pages@v5
         with:
