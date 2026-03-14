@@ -1,0 +1,3 @@
+## 2025-12-11 - CI Optimization for Uninitialized Repositories
+**Learning:** In repositories that lack manifest files (package.json, package-lock.json), standard GitHub Action workflows for Node.js and Next.js fail immediately. Hardcoding `cache: 'npm'` or failing to detect a package manager prevents the CI from completing even for non-code changes.
+**Action:** Implement "Bootstrap Guard" patterns: use conditional logic (`if: hashFiles(...)`) for installation and cache steps, and ensure package manager detection gracefully handles missing files by setting empty outputs instead of exiting with an error.
