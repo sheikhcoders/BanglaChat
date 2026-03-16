@@ -4,7 +4,6 @@
 
 ---
 
-## <span role="img" aria-label="hammer and wrench">🛠️</span> Info | তথ্য
+## <span role="img" aria-label="shield">🛡️</span> Security | নিরাপত্তা
 
-Follow our [PR Template](.github/PULL_REQUEST_TEMPLATE.md). / [পুল রিকোয়েস্ট টেমপ্লেট](.github/PULL_REQUEST_TEMPLATE.md) দেখুন।
 Email security@banglachat.org. / security@banglachat.org এ ইমেল করুন।
