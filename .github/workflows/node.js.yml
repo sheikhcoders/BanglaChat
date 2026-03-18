@@ -23,8 +23,23 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
+  pre-check:
+    runs-on: ubuntu-latest
+    outputs:
+      has-package-json: ${{ steps.check.outputs.has-package-json }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - id: check
+        run: |
+          if [ -f "package.json" ]; then
+            echo "has-package-json=true" >> $GITHUB_OUTPUT
+          else
+            echo "has-package-json=false" >> $GITHUB_OUTPUT
+          fi
 
+  build:
+    needs: pre-check
+    if: needs.pre-check.outputs.has-package-json == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
