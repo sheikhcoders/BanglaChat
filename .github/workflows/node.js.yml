@@ -6,17 +6,16 @@ name: Node.js CI
 on:
   push:
     branches: ["main"]
-    paths-ignore:
-      - '.jules/**'
-      - 'README.md'
   pull_request:
     branches: ["main"]
-    paths-ignore:
-      - '.jules/**'
-      - 'README.md'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
+    if: hashFiles('package.json') != ''
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -31,7 +30,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: ${{ hashFiles('pnpm-lock.yaml') != '' && 'pnpm' || '' }}
+          cache: "pnpm"
       - run: pnpm install
       - run: pnpm build --if-present
       - run: pnpm test
