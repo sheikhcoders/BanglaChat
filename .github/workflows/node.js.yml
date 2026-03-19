@@ -34,7 +34,13 @@ jobs:
       uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+        cache: ${{ hashFiles('package-lock.json') != '' && 'npm' || '' }}
+    - name: Install dependencies
+      if: hashFiles('package-lock.json') != ''
+      run: npm ci
+    - name: Build source
+      if: hashFiles('package.json') != ''
+      run: npm run build --if-present
+    - name: Run tests
+      if: hashFiles('package.json') != ''
+      run: npm test
