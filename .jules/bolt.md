@@ -1,0 +1,3 @@
+## 2025-05-22 - Optimizing CI efficiency for uninitialized repositories
+**Learning:** Sequential CI jobs with separate file-presence checks introduce unnecessary latency. Native GitHub Action expressions like `if: hashFiles('package.json') != ''` (Smart Pre-check) provide a zero-latency way to skip workflows in early bootstrap phases. Additionally, making `actions/setup-node` caching conditional on lockfile presence (Bootstrap Guard) prevents "cache not found" errors that block initial PRs.
+**Action:** Always use job-level `hashFiles` guards and conditional caching in workflows for projects that may exist in a partially-initialized state.
