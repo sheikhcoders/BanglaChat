@@ -1,0 +1,3 @@
+## 2025-05-14 - Optimizing CI for Uninitialized Repositories
+**Learning:** Separate 'pre-check' jobs in CI introduce significant latency regressions (runner provisioning and checkout overhead). For simple file-presence checks in uninitialized repositories, native job-level `if` conditions (e.g., `if: hashFiles('package.json') != ''`) are superior for performance. Additionally, using `paths-ignore` for documentation and journals avoids wasting resources on non-code changes.
+**Action:** Use job-level `if` guards and `paths-ignore` in GitHub Actions workflows to conserve resources and prevent infrastructure failures in early project phases.
