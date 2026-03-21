@@ -6,12 +6,26 @@ name: Node.js CI
 on:
   push:
     branches: [ "main" ]
+    # Optimize: Skip CI for documentation and internal agent logs to save resources
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
   pull_request:
     branches: [ "main" ]
+    # Optimize: Skip CI for documentation and internal agent logs to save resources
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
+
+# Optimize: Cancel outdated runs on the same branch to improve developer feedback time
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
-
+    # Optimize: Native job-level guard prevents workflow failure and runner waste in uninitialized repositories
+    if: hashFiles('package.json') != ''
     runs-on: ubuntu-latest
 
     strategy:
