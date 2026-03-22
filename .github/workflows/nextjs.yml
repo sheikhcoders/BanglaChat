@@ -8,6 +8,10 @@ on:
   # Runs on pushes targeting the default branch
   push:
     branches: ["main"]
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
+      - '.github/pull_request_template.md'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -41,14 +45,16 @@ jobs:
             echo "runner=npx --no-install" >> $GITHUB_OUTPUT
             exit 0
           else
-            echo "Unable to determine package manager"
-            exit 1
+            echo "manager=npm" >> $GITHUB_OUTPUT
+            echo "command=ci" >> $GITHUB_OUTPUT
+            echo "runner=npx --no-install" >> $GITHUB_OUTPUT
+            exit 0
           fi
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: ${{ steps.detect-package-manager.outputs.manager }}
+          cache: ${{ hashFiles('package-lock.json') != '' && steps.detect-package-manager.outputs.manager || '' }}
       - name: Setup Pages
         uses: actions/configure-pages@v5
         with:
@@ -69,8 +75,13 @@ jobs:
             ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}-
       - name: Install dependencies
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
+        if: hashFiles('package.json') != ''
       - name: Build with Next.js
         run: ${{ steps.detect-package-manager.outputs.runner }} next build
+        if: hashFiles('package.json') != ''
+      - name: Create empty out directory if build skipped
+        run: mkdir -p ./out
+        if: hashFiles('package.json') == ''
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
@@ -86,6 +97,7 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: build
+    if: github.ref == 'refs/heads/main'
     steps:
       - name: Deploy to GitHub Pages
         id: deployment

@@ -1,0 +1,7 @@
+## 2025-03-22 - Bilingual Accessible Documentation Standard
+**Learning:** In an uninitialized repository where application code is absent, enhancing the developer experience via bilingual and accessible documentation (README, PR templates) is the primary path for micro-UX improvements. Providing descriptions in both target languages within ARIA labels (e.g., `<span role="img" aria-label="chat bubble / চ্যাট বাবল">💬</span>`) ensures visual cues are conveyed to screen reader users regardless of their system language setting.
+**Action:** Always implement bilingual ARIA labels for emojis and ensure PR templates reflect the project's localization standards to maintain a consistent contributor experience.
+
+## 2025-03-22 - CI/DX Efficiency in Uninitialized Repositories
+**Learning:** Modifying GitHub Action workflow files triggers a CI run regardless of any `paths-ignore` directives defined within that workflow. In uninitialized repositories (missing `package.json` or lockfiles), standard CI steps like `actions/setup-node` caching, `npm ci`, and even `npm run build --if-present` will fail. Specifically, `pnpm run build --if-present` (or npm equivalent) fails with exit code 254 (ENOENT) if the `package.json` file is physically missing from the repository root.
+**Action:** When working on uninitialized repositories, proactively implement Bootstrap Guards (`if: hashFiles(...)`) in CI workflows for ALL package manager dependent steps, including those with `--if-present` flags, to prevent infrastructure-related failures.
