@@ -75,8 +75,13 @@ jobs:
             ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}-
       - name: Install dependencies
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
+        if: hashFiles('package.json') != ''
       - name: Build with Next.js
         run: ${{ steps.detect-package-manager.outputs.runner }} next build
+        if: hashFiles('package.json') != ''
+      - name: Create empty fallback for Pages
+        run: mkdir -p ./out
+        if: hashFiles('package.json') == '' && github.event_name == 'push'
       - name: Upload artifact
         uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3.0.1
         with:
