@@ -1,0 +1,3 @@
+## 2025-03-24 - CI Efficiency & Smart Pre-checks
+**Learning:** Separate 'pre-check' jobs in CI introduce significant latency regressions (runner provisioning and checkout overhead). For simple file-presence checks (e.g., ensuring package.json exists before running a heavy matrix), native job-level `if` conditions are superior for performance. Additionally, caching in `actions/setup-node` fails if the lockfile is missing; a "Bootstrap Guard" using conditional expressions prevents this.
+**Action:** Use `if: hashFiles('package.json') != ''` at the job level to skip unnecessary runs in uninitialized repos, and use `cache: ${{ hashFiles('package-lock.json') != '' && 'npm' || '' }}` for setup-node.
