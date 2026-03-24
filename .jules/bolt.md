@@ -1,0 +1,3 @@
+## 2025-05-22 - CI Resource Efficiency for Uninitialized Repositories
+**Learning:** Sequential CI jobs and setup steps (like `actions/setup-node` caching) can cause significant latency and resource waste in repositories without a `package.json` or lockfile. Separate 'pre-check' jobs introduce overhead; native job-level `if` guards and shell conditionals within steps are more efficient.
+**Action:** Use native job-level `if: hashFiles('package.json') != ''` guards and conditional logic for caching/installation (the "Bootstrap Guard" pattern) to prevent unnecessary CI runs and failures in uninitialized repository states.

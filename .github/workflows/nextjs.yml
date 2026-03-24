@@ -8,6 +8,9 @@ on:
   # Runs on pushes targeting the default branch
   push:
     branches: ["main"]
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -21,9 +24,14 @@ concurrency:
 jobs:
   # Build job
   build:
+    # Bootstrap Guard: skip if the repository is uninitialized to save resources
+    if: hashFiles('package.json') != ''
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
+    outputs:
+      manager: ${{ steps.detect-package-manager.outputs.manager }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -78,6 +86,8 @@ jobs:
 
   # Deployment job
   deploy:
+    # Deployment depends on build, which might be skipped in uninitialized state
+    if: needs.build.result == 'success'
     permissions:
       pages: write
       id-token: write
