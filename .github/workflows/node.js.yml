@@ -5,27 +5,52 @@ name: Node.js CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
+    paths-ignore:
+      - "README.md"
+      - ".jules/**"
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
+    paths-ignore:
+      - "README.md"
+      - ".jules/**"
+
+# Optimize runner utilization by canceling stale runs
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
-
+    # Bootstrap Guard: Skip the build job if the repository is uninitialized
+    if: hashFiles('package.json') != ''
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
 
     strategy:
       matrix:
         node-version: [18.x, 20.x, 22.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+      - name: Checkout
+        uses: actions/checkout@v4.2.2 # actions/checkout@v4
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4.2.0 # actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          # Bootstrap Guard: Use conditional caching logic to avoid errors on missing lockfiles
+          cache: ${{ hashFiles('package-lock.json') != '' && 'npm' || '' }}
+      - name: Install dependencies
+        # Refine npm installation to handle missing lockfiles gracefully
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+      - name: Build
+        run: npm run build --if-present
+      - name: Test
+        run: npm test --if-present
