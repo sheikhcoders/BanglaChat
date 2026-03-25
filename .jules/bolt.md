@@ -1,0 +1,3 @@
+## 2025-03-25 - CI Workflow Efficiency and "Bootstrap Guard" Pattern
+**Learning:** Default CI workflows (e.g., `actions/setup-node` with `cache: 'npm'`) fail immediately in uninitialized repositories where `package.json` or `package-lock.json` are missing. This causes unnecessary job failures and wastes runner resources.
+**Action:** Implement "Bootstrap Guards" using job-level `if: hashFiles('package.json') != ''` and conditional caching logic `${{ hashFiles('package-lock.json') != '' && 'npm' || '' }}` to ensure workflows exit gracefully or skip unnecessary steps in early-stage or documentation-only PRs.
