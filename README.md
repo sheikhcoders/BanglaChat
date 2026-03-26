@@ -1,6 +1,6 @@
 # <span role="img" aria-label="chat bubble / চ্যাট বাবল">💬</span> BanglaChat | বাংলাচ্যাট
 
-An open-source communication platform for the Bengali-speaking community.
+An open-source communication platform for the Bengali community.
 বাংলা ভাষাভাষী জনগোষ্ঠীর জন্য একটি ওপেন-সোর্স যোগাযোগ মাধ্যম।
 
 ## <span role="img" aria-label="rocket / রকেট">🚀</span> Quick Start | দ্রুত শুরু করুন
