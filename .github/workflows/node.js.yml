@@ -9,10 +9,17 @@ on:
   pull_request:
     branches: [ "main" ]
 
+# Optimize runner utilization by canceling stale runs
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
 
     strategy:
       matrix:
@@ -20,12 +27,29 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
     - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+        # Bootstrap Guard: Only enable caching if a lockfile exists to avoid errors in uninitialized repositories
+        cache: ${{ hashFiles('package-lock.json') != '' && 'npm' || '' }}
+    - name: Install dependencies
+      # Bootstrap Guard: Only run installation if package.json exists to avoid failures in uninitialized repositories
+      if: hashFiles('package.json') != ''
+      # Switch between 'npm ci' (for lockfiles) and 'npm install' (fallback)
+      run: |
+        if [ -f package-lock.json ]; then
+          npm ci
+        else
+          npm install
+        fi
+    - name: Build
+      # Bootstrap Guard: Prevent failure if package.json is missing
+      if: hashFiles('package.json') != ''
+      run: npm run build --if-present
+    - name: Test
+      # Bootstrap Guard: Prevent failure if package.json is missing
+      if: hashFiles('package.json') != ''
+      run: npm test
