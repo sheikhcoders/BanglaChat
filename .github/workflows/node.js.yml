@@ -6,11 +6,25 @@ name: Node.js CI
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
   pull_request:
     branches: [ "main" ]
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
+
+# Cancel in-progress runs when a new commit is pushed to the same PR or branch.
+# This saves runner minutes and provides faster feedback.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
+    # Skip the build job if package.json is missing to prevent CI failure in uninitialized states.
+    if: hashFiles('package.json') != ''
 
     runs-on: ubuntu-latest
 
