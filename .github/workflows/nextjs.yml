@@ -22,13 +22,15 @@ jobs:
   # Build job
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Detect package manager
         id: detect-package-manager
+        # Bootstrap Guard: Allow step to succeed even if package.json is missing for uninitialized state
         run: |
           if [ -f "${{ github.workspace }}/yarn.lock" ]; then
             echo "manager=yarn" >> $GITHUB_OUTPUT
@@ -41,16 +43,22 @@ jobs:
             echo "runner=npx --no-install" >> $GITHUB_OUTPUT
             exit 0
           else
-            echo "Unable to determine package manager"
-            exit 1
+            echo "Unable to determine package manager, using fallback"
+            echo "manager=npm" >> $GITHUB_OUTPUT
+            echo "command=install" >> $GITHUB_OUTPUT
+            echo "runner=npm" >> $GITHUB_OUTPUT
+            exit 0
           fi
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
         with:
           node-version: "20"
-          cache: ${{ steps.detect-package-manager.outputs.manager }}
+          # Bootstrap Guard: Only enable caching if a lockfile exists
+          cache: ${{ hashFiles('package-lock.json', 'yarn.lock') != '' && steps.detect-package-manager.outputs.manager || '' }}
       - name: Setup Pages
-        uses: actions/configure-pages@v5
+        # Bootstrap Guard: Skip if project is not yet initialized
+        if: hashFiles('package.json') != ''
+        uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5.0.0
         with:
           # Automatically inject basePath in your Next.js configuration file and disable
           # server side image optimization (https://nextjs.org/docs/api-reference/next/image#unoptimized).
@@ -58,7 +66,9 @@ jobs:
           # You may remove this line if you want to manage the configuration yourself.
           static_site_generator: next
       - name: Restore cache
-        uses: actions/cache@v4
+        # Bootstrap Guard: Skip if project is not yet initialized
+        if: hashFiles('package.json') != ''
+        uses: actions/cache@d4323d4df104b026a6aa633fdb11d772146be0bf # v4.2.2
         with:
           path: |
             .next/cache
@@ -68,13 +78,21 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}-
       - name: Install dependencies
+        # Bootstrap Guard: Skip if project is not yet initialized
+        if: hashFiles('package.json') != ''
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
       - name: Build with Next.js
+        # Bootstrap Guard: Skip if project is not yet initialized
+        if: hashFiles('package.json') != ''
         run: ${{ steps.detect-package-manager.outputs.runner }} next build
+      - name: Create fallback directory
+        # Bootstrap Guard: Create empty directory if build was skipped to prevent upload failure
+        if: hashFiles('package.json') == ''
+        run: mkdir -p ./empty_out
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3.0.1
         with:
-          path: ./out
+          path: ${{ hashFiles('package.json') != '' && './out' || './empty_out' }}
 
   # Deployment job
   deploy:
@@ -85,8 +103,11 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: build
+    # Bootstrap Guard: Skip deployment if project is not yet initialized
+    if: github.ref == 'refs/heads/main' && hashFiles('package.json') != ''
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5
