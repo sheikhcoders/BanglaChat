@@ -36,7 +36,9 @@ jobs:
         # Bootstrap Guard: Only enable caching if a lockfile exists to avoid errors in uninitialized repositories
         cache: ${{ hashFiles('package-lock.json') != '' && 'npm' || '' }}
     - name: Install dependencies
-      # Bootstrap Guard: Switch between 'npm ci' (for lockfiles) and 'npm install' (fallback)
+      # Bootstrap Guard: Only run installation if package.json exists to avoid failures in uninitialized repositories
+      if: hashFiles('package.json') != ''
+      # Switch between 'npm ci' (for lockfiles) and 'npm install' (fallback)
       run: |
         if [ -f package-lock.json ]; then
           npm ci
