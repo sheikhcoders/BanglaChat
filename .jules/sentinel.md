@@ -1,0 +1,4 @@
+## 2025-05-14 - Supply Chain Hardening & CI Bootstrap Guards
+**Vulnerability:** Supply chain risk via mutable Action tags and CI noise/instability in the repository's uninitialized (early) state.
+**Learning:** SHA pinning for GitHub Actions is the primary defense against tag-moving attacks in this repository. To maintain CI stability while the codebase is still being bootstrapped (e.g. missing `package.json`), "Bootstrap Guards" using `if: hashFiles(...)` are used. This ensures that documentation-only or early setup PRs don't trigger false-positive build failures, while still enforcing security standards via pinned SHAs and least-privilege permissions.
+**Prevention:** Always pin Actions to immutable SHAs. Use conditional step execution to guard against missing project manifests during the bootstrap phase of the repository.
