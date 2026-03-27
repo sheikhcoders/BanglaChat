@@ -1,0 +1,3 @@
+## 2026-03-27 - Repo as Interface: Bilingual and Accessible Documentation
+**Learning:** For localized projects like BanglaChat, the repository documentation itself (README, PR Templates) is part of the user/contributor interface. It must provide equivalent value in both primary languages (English and Bengali) and ensure accessibility by marking up emojis for screen readers.
+**Action:** Always implement bilingual headers and descriptions in repository documentation, and use `<span role="img" aria-label="English description / Bengali description">Emoji</span>` for all informative or decorative emojis to maintain context across languages and for screen reader users.
