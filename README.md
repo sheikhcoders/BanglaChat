@@ -10,5 +10,5 @@ This project is currently under development. Stay tuned for updates!
 
 ## <span aria-hidden="true">🤝</span> Contributing | অবদান রাখা
 
-We welcome contributions! Please feel free to submit a **পুলি রিকুয়েস্ট** (Pull Request).
-আমরা অবদান রাখা সমর্থন করি! অনুগ্রহ করে নির্দ্বিধায় একটি **পুলি রিকুয়েস্ট** সাবমিট করুন।
+We welcome contributions! Please feel free to submit a **পুল রিকোয়েস্ট** (Pull Request).
+আমরা অবদান রাখা সমর্থন করি! অনুগ্রহ করে নির্দ্বিধায় একটি **পুল রিকোয়েস্ট** সাবমিট করুন।
