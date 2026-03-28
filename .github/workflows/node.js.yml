@@ -6,12 +6,26 @@ name: Node.js CI
 on:
   push:
     branches: [ "main" ]
+    # Bolt: Skip documentation and agent-specific metadata to save CI resources
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
   pull_request:
     branches: [ "main" ]
+    # Bolt: Skip documentation and agent-specific metadata to save CI resources
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
+
+# Bolt: Cancel redundant runs on the same branch to optimize runner utilization
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
-
+    # Bolt: Bootstrap Guard - skip if no package.json to prevent unnecessary failures in uninitialized repos
+    if: hashFiles('package.json') != ''
     runs-on: ubuntu-latest
 
     strategy:
