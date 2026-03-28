@@ -1,0 +1,3 @@
+## 2025-03-28 - Repo as Interface: Bilingual Accessible Foundation
+**Learning:** The repository itself (README, PR Templates) serves as the primary interface for developers and contributors. For a localized project like BanglaChat, providing a bilingual (English/Bengali) and accessible foundation from the start is a CRITICAL UX pattern that sets the tone for future development.
+**Action:** Always implement bilingual headers and use accessible emoji markup (`<span role="img" aria-label="...">Emoji</span>`) in documentation for localized projects to ensure clarity for all users, including those using screen readers.
