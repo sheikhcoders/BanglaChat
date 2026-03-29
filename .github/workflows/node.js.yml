@@ -6,12 +6,18 @@ name: Node.js CI
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - "README.md"
+      - ".jules/**"
   pull_request:
     branches: [ "main" ]
+    paths-ignore:
+      - "README.md"
+      - ".jules/**"
 
 jobs:
   build:
-
+    timeout-minutes: 15
     runs-on: ubuntu-latest
 
     strategy:
