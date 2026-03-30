@@ -1,0 +1,3 @@
+## 2025-03-30 - CI Workflow Resource Optimization
+**Learning:** Implementing `paths-ignore` for documentation and journal files (`README.md`, `.jules/**`) provides a significant performance boost for non-functional updates by skipping unnecessary CI builds. Hardening workflows with `timeout-minutes` and `cancel-in-progress: true` prevents resource waste and ensures faster feedback for active development.
+**Action:** Always include `paths-ignore` for documentation and metadata files in new CI workflows and enforce resource limits and concurrency controls to optimize repository compute consumption.
