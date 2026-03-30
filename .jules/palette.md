@@ -1,0 +1,3 @@
+## 2025-05-15 - Accessible bilingual documentation pattern
+**Learning:** For localized projects like BanglaChat, the repository documentation (README, PULL_REQUEST_TEMPLATE, etc.) acts as the primary user interface for developers. Implementing a bilingual (English/Bengali) foundation with accessible emoji markup (`aria-label` for informative, `aria-hidden` for decorative) ensures that the project is inclusive from the very first commit.
+**Action:** Always provide equivalent content in both primary languages and ensure all emojis used in documentation are properly wrapped in ARIA roles to avoid screen reader redundancy or confusion.
