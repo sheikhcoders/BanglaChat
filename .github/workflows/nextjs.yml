@@ -67,6 +67,8 @@ jobs:
           # Only enable caching if a corresponding lockfile exists
           cache: ${{ (steps.detect-package-manager.outputs.manager == 'npm' && hashFiles('package-lock.json') != '') || (steps.detect-package-manager.outputs.manager == 'pnpm' && hashFiles('pnpm-lock.yaml') != '') || (steps.detect-package-manager.outputs.manager == 'yarn' && hashFiles('yarn.lock') != '') && steps.detect-package-manager.outputs.manager || '' }}
       - name: Setup Pages
+        # Guard this step as it can fail if Pages is not yet enabled on the repository
+        if: hashFiles('package.json') != ''
         uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5.0.0
         with:
           # Automatically inject basePath in your Next.js configuration file and disable
