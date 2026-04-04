@@ -1,0 +1,3 @@
+## 2026-04-04 - CI Trigger and Caching Optimization
+**Learning:** In uninitialized repositories, GitHub Actions workflows can be triggered unnecessarily by non-code changes (like documentation or journals), wasting CI compute minutes. Additionally, caching logic may miss support for certain package managers (like pnpm) if not explicitly included in the lockfile hash.
+**Action:** Always add `paths-ignore` for documentation (`README.md`) and journal files (`.jules/**`) to prevent redundant CI runs. Ensure `pnpm-lock.yaml` is included in caching `hashFiles` when pnpm is used or supported in the environment.
