@@ -44,8 +44,10 @@ jobs:
             echo "runner=npx --no-install" >> $GITHUB_OUTPUT
             exit 0
           else
-            echo "Unable to determine package manager"
-            exit 1
+            echo "manager=" >> $GITHUB_OUTPUT
+            echo "command=" >> $GITHUB_OUTPUT
+            echo "runner=" >> $GITHUB_OUTPUT
+            exit 0
           fi
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -53,6 +55,7 @@ jobs:
           node-version: "20"
           cache: ${{ steps.detect-package-manager.outputs.manager }}
       - name: Setup Pages
+        if: hashFiles('package.json') != ''
         uses: actions/configure-pages@v5
         with:
           # Automatically inject basePath in your Next.js configuration file and disable
@@ -61,6 +64,7 @@ jobs:
           # You may remove this line if you want to manage the configuration yourself.
           static_site_generator: next
       - name: Restore cache
+        if: hashFiles('package.json') != ''
         uses: actions/cache@v4
         with:
           path: |
@@ -71,13 +75,23 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}-
       - name: Install dependencies
+        if: steps.detect-package-manager.outputs.manager != ''
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
       - name: Build with Next.js
+        if: steps.detect-package-manager.outputs.runner != ''
         run: ${{ steps.detect-package-manager.outputs.runner }} next build
+      - name: Bootstrap Guard
+        run: |
+          if [ ! -d "./out" ]; then
+            mkdir -p ./empty_out
+            echo "ARTIFACT_PATH=./empty_out" >> $GITHUB_ENV
+          else
+            echo "ARTIFACT_PATH=./out" >> $GITHUB_ENV
+          fi
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./out
+          path: ${{ env.ARTIFACT_PATH }}
 
   # Deployment job
   deploy:
