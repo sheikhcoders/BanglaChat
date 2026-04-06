@@ -1,0 +1,3 @@
+## 2026-04-05 - Bilingual Repository Interface
+**Learning:** For repositories focused on specific languages (like BanglaChat), making the top-level README and project metadata bilingual is a key accessibility and UX improvement. It demonstrates immediate inclusivity to the target audience.
+**Action:** When working on language-specific repositories, implement bilingual documentation using `<div lang="...">` wrappers for screen reader support. Note: Use explicit HTML tags (e.g., `<h2>`, `<p>`) inside these wrappers, as many Markdown parsers fail to render standard Markdown when nested inside a block-level HTML element.
