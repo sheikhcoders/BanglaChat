@@ -44,16 +44,19 @@ jobs:
             echo "runner=npx --no-install" >> $GITHUB_OUTPUT
             exit 0
           else
-            echo "Unable to determine package manager"
-            exit 1
+            echo "manager=npm" >> $GITHUB_OUTPUT
+            echo "command=install" >> $GITHUB_OUTPUT
+            echo "runner=npx --no-install" >> $GITHUB_OUTPUT
+            exit 0
           fi
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: ${{ steps.detect-package-manager.outputs.manager }}
+          cache: ${{ (hashFiles('package-lock.json') != '' || hashFiles('yarn.lock') != '') && steps.detect-package-manager.outputs.manager || '' }}
       - name: Setup Pages
         uses: actions/configure-pages@v5
+        if: hashFiles('package.json') != ''
         with:
           # Automatically inject basePath in your Next.js configuration file and disable
           # server side image optimization (https://nextjs.org/docs/api-reference/next/image#unoptimized).
@@ -62,6 +65,7 @@ jobs:
           static_site_generator: next
       - name: Restore cache
         uses: actions/cache@v4
+        if: hashFiles('package.json') != ''
         with:
           path: |
             .next/cache
@@ -72,12 +76,17 @@ jobs:
             ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}-
       - name: Install dependencies
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
+        if: hashFiles('package.json') != ''
       - name: Build with Next.js
         run: ${{ steps.detect-package-manager.outputs.runner }} next build
+        if: hashFiles('package.json') != ''
+      - name: Create fallback artifact for uninitialized repo
+        run: mkdir -p ./empty_out && echo "No build generated" > ./empty_out/index.html
+        if: hashFiles('package.json') == ''
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./out
+          path: ${{ hashFiles('package.json') != '' && './out' || './empty_out' }}
 
   # Deployment job
   deploy:
