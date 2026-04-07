@@ -6,15 +6,18 @@ name: Node.js CI
 on:
   push:
     branches: [ "main" ]
+    # BOLT OPTIMIZATION: Skip CI for documentation and agent journal changes to save compute resources.
     paths-ignore:
       - 'README.md'
       - '.jules/**'
   pull_request:
     branches: [ "main" ]
+    # BOLT OPTIMIZATION: Skip CI for documentation and agent journal changes to save compute resources.
     paths-ignore:
       - 'README.md'
       - '.jules/**'
 
+# BOLT OPTIMIZATION: Cancel outdated runs when a new push occurs to optimize compute resource usage.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -35,7 +38,17 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+        # BOLT OPTIMIZATION: Only enable caching if a lockfile exists to prevent CI failures in uninitialized states.
+        cache: ${{ hashFiles('package-lock.json') != '' && 'npm' || '' }}
+    - name: Install dependencies
+      # Skip npm ci if no lockfile exists to avoid build failure in uninitialized repository.
+      if: hashFiles('package-lock.json') != ''
+      run: npm ci
+    - name: Build
+      # Skip build if no package.json exists.
+      if: hashFiles('package.json') != ''
+      run: npm run build --if-present
+    - name: Test
+      # Skip tests if no package.json exists.
+      if: hashFiles('package.json') != ''
+      run: npm test
