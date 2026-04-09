@@ -8,7 +8,6 @@ on:
   # Runs on pushes targeting the default branch
   push:
     branches: ["main"]
-    # ⚡ Bolt: Skip CI runs for documentation-only changes to save resources
     paths-ignore:
       - 'README.md'
       - '.jules/**'
@@ -39,11 +38,6 @@ jobs:
             echo "command=install" >> $GITHUB_OUTPUT
             echo "runner=yarn" >> $GITHUB_OUTPUT
             exit 0
-          elif [ -f "${{ github.workspace }}/package-lock.json" ] || [ -f "${{ github.workspace }}/npm-shrinkwrap.json" ]; then
-            echo "manager=npm" >> $GITHUB_OUTPUT
-            echo "command=ci" >> $GITHUB_OUTPUT
-            echo "runner=npx --no-install" >> $GITHUB_OUTPUT
-            exit 0
           else
             echo "manager=npm" >> $GITHUB_OUTPUT
             echo "command=install" >> $GITHUB_OUTPUT
@@ -54,8 +48,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          # ⚡ Bolt: Only enable caching if a lockfile exists to prevent setup-node failures
-          cache: ${{ (hashFiles('package-lock.json') != '' || hashFiles('npm-shrinkwrap.json') != '') && 'npm' || (hashFiles('yarn.lock') != '' && 'yarn' || '') }}
+          cache: ${{ steps.detect-package-manager.outputs.manager }}
       - name: Setup Pages
         uses: actions/configure-pages@v5
         with:
@@ -75,14 +68,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}-
       - name: Install dependencies
-        # ⚡ Bolt: Use 'npm ci' for faster installs when lockfile exists
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
         if: hashFiles('package.json') != ''
       - name: Build with Next.js
         run: ${{ steps.detect-package-manager.outputs.runner }} next build
         if: hashFiles('package.json') != ''
       - name: Bootstrap Guard
-        # ⚡ Bolt: Create fallback directory if build is skipped to prevent artifact upload failure
         run: |
           if [ ! -d "./out" ]; then
             mkdir -p ./empty_out
