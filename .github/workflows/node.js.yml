@@ -6,8 +6,22 @@ name: Node.js CI
 on:
   push:
     branches: [ "main" ]
+    # ⚡ Bolt: Skip CI runs for documentation-only changes to save resources
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
   pull_request:
     branches: [ "main" ]
+    # ⚡ Bolt: Skip CI runs for documentation-only changes to save resources
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
+
+# ⚡ Bolt: Cancel in-progress runs when a new push is made to the same branch
+# This saves CI compute minutes and provides faster feedback
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -25,7 +39,15 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
+        # ⚡ Bolt: Only enable caching if a lockfile exists to prevent setup-node failures
+        cache: ${{ (hashFiles('package-lock.json') != '' || hashFiles('npm-shrinkwrap.json') != '') && 'npm' || '' }}
+    # ⚡ Bolt: Use npm ci for faster, deterministic installs in CI
     - run: npm ci
+      if: hashFiles('package-lock.json') != '' || hashFiles('npm-shrinkwrap.json') != ''
+    # ⚡ Bolt: Fallback to npm install if no lockfile exists (initial bootstrap phase)
+    - run: npm install
+      if: hashFiles('package.json') != '' && hashFiles('package-lock.json') == '' && hashFiles('npm-shrinkwrap.json') == ''
     - run: npm run build --if-present
+      if: hashFiles('package.json') != ''
     - run: npm test
+      if: hashFiles('package.json') != ''
