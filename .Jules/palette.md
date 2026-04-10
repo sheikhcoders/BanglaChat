@@ -1,0 +1,3 @@
+## 2026-04-10 - Repo as Interface: Bilingual Foundation
+**Learning:** For projects like BanglaChat that target specific language communities, the repository itself (README, PR templates) serves as the primary user interface during the early stages. A bilingual (English/Bengali) and accessible foundation is a high-value micro-UX improvement. The preferred Bengali translation for 'Pull Request' in this repository is 'পুল রিকোয়েস্ট'.
+**Action:** When initializing or working on localized projects, ensure that core documentation is bilingual and uses proper ARIA roles and lang attributes (within explicit HTML tags) for screen reader accessibility. Ensure correct directory casing (e.g., .Jules).
