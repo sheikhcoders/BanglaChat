@@ -6,8 +6,22 @@ name: Node.js CI
 on:
   push:
     branches: [ "main" ]
+    # ⚡ Bolt: Skip CI runs for documentation and journal updates to save compute resources
+    paths-ignore:
+      - 'README.md'
+      - '.Jules/**'
   pull_request:
     branches: [ "main" ]
+    # ⚡ Bolt: Skip CI runs for documentation and journal updates to save compute resources
+    paths-ignore:
+      - 'README.md'
+      - '.Jules/**'
+
+# ⚡ Bolt: Cancel in-progress runs when a new push is made to the same branch/PR
+# This provides faster feedback and reduces wasted CI capacity
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
