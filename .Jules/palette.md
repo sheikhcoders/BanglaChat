@@ -1,0 +1,3 @@
+## 2026-04-10 - Establishing Bilingual Foundation in Uninitialized Repos
+**Learning:** In uninitialized repositories where no source code exists, the `README.md` serves as the primary user interface. Applying bilingual support (English/Bengali) with proper ARIA regions and language tags ensures that the project is accessible and welcoming from the very first commit. Standard Markdown headings often fail inside `<div>` tags, so explicit HTML tags are necessary for consistent rendering across different Markdown parsers.
+**Action:** Always establish a bilingual, accessible `README.md` as the first UX improvement in empty or early-stage repositories targeting specific language communities.
