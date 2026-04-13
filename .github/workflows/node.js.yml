@@ -6,8 +6,23 @@ name: Node.js CI
 on:
   push:
     branches: [ "main" ]
+    # Optimize: Ignore documentation and journal changes to save CI compute
+    paths-ignore:
+      - 'README.md'
+      - '.Jules/**'
+      - '.github/SECURITY.md'
   pull_request:
     branches: [ "main" ]
+    # Optimize: Ignore documentation and journal changes to save CI compute
+    paths-ignore:
+      - 'README.md'
+      - '.Jules/**'
+      - '.github/SECURITY.md'
+
+# Optimize: Cancel in-progress runs for the same branch/PR to save resources
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
