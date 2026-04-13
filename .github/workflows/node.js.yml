@@ -40,7 +40,21 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+        # Only cache if lockfile exists to avoid fatal error in uninitialized repo
+        cache: ${{ hashFiles('package-lock.json', 'npm-shrinkwrap.json') != '' && 'npm' || '' }}
+    - name: Install dependencies
+      # Use npm ci for speed if lockfile exists, fallback to npm install, skip if no package.json
+      run: |
+        if [ -f "package-lock.json" ] || [ -f "npm-shrinkwrap.json" ]; then
+          npm ci
+        elif [ -f "package.json" ]; then
+          npm install
+        else
+          echo "No package.json found, skipping install."
+        fi
+    - name: Build
+      if: hashFiles('package.json') != ''
+      run: npm run build --if-present
+    - name: Test
+      if: hashFiles('package.json') != ''
+      run: npm test
