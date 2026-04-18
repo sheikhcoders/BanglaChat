@@ -6,8 +6,21 @@ name: Node.js CI
 on:
   push:
     branches: [ "main" ]
+    # Bolt Optimization: Ignore documentation and journal changes to save compute
+    paths-ignore:
+      - 'README.md'
+      - '.Jules/**'
   pull_request:
     branches: [ "main" ]
+    # Bolt Optimization: Ignore documentation and journal changes to save compute
+    paths-ignore:
+      - 'README.md'
+      - '.Jules/**'
+
+# Bolt Optimization: Cancel in-progress runs to save compute resources
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
