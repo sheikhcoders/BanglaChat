@@ -1,0 +1,3 @@
+## 2026-04-20 - Initial CI Workflow Optimization
+**Learning:** In uninitialized repositories, standard CI workflows often fail because they expect a `package.json` or a lockfile to exist. Adding robust detection logic and guards prevents these fatal errors and saves compute resources by skipping irrelevant steps.
+**Action:** Implement `paths-ignore`, concurrency controls, and robust package manager detection in all GitHub Actions workflows.
