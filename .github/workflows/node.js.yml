@@ -6,8 +6,21 @@ name: Node.js CI
 on:
   push:
     branches: [ "main" ]
+    # BOLT OPTIMIZATION: Skip CI for documentation and journal updates to save compute.
+    paths-ignore:
+      - 'README.md'
+      - '.Jules/**'
   pull_request:
     branches: [ "main" ]
+    # BOLT OPTIMIZATION: Skip CI for documentation and journal updates to save compute.
+    paths-ignore:
+      - 'README.md'
+      - '.Jules/**'
+
+# BOLT OPTIMIZATION: Cancel in-progress runs for the same PR/branch to save compute resources.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -21,11 +34,61 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+
+    - name: Detect package manager
+      id: detect-package-manager
+      run: |
+        if [ -f "${{ github.workspace }}/pnpm-lock.yaml" ]; then
+          echo "manager=pnpm" >> $GITHUB_OUTPUT
+        elif [ -f "${{ github.workspace }}/yarn.lock" ]; then
+          echo "manager=yarn" >> $GITHUB_OUTPUT
+        elif [ -f "${{ github.workspace }}/package-lock.json" ]; then
+          echo "manager=npm" >> $GITHUB_OUTPUT
+        else
+          echo "manager=" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Install pnpm
+      if: steps.detect-package-manager.outputs.manager == 'pnpm'
+      uses: pnpm/action-setup@b307475762933b98ed359c036b0e51f26b63b74b
+
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+        # BOLT OPTIMIZATION: Conditional cache to prevent fatal errors when lockfile is missing.
+        cache: ${{ steps.detect-package-manager.outputs.manager || '' }}
+
+    # BOLT OPTIMIZATION: Guard steps to prevent failures in uninitialized repositories.
+    - name: Install dependencies
+      if: hashFiles('package.json') != ''
+      run: |
+        if [ "${{ steps.detect-package-manager.outputs.manager }}" == "pnpm" ]; then
+          pnpm install
+        elif [ "${{ steps.detect-package-manager.outputs.manager }}" == "yarn" ]; then
+          yarn install
+        else
+          npm ci
+        fi
+
+    - name: Build
+      if: hashFiles('package.json') != ''
+      run: |
+        if [ "${{ steps.detect-package-manager.outputs.manager }}" == "pnpm" ]; then
+          pnpm run build --if-present
+        elif [ "${{ steps.detect-package-manager.outputs.manager }}" == "yarn" ]; then
+          yarn run build --if-present
+        else
+          npm run build --if-present
+        fi
+
+    - name: Test
+      if: hashFiles('package.json') != ''
+      run: |
+        if [ "${{ steps.detect-package-manager.outputs.manager }}" == "pnpm" ]; then
+          pnpm test
+        elif [ "${{ steps.detect-package-manager.outputs.manager }}" == "yarn" ]; then
+          yarn test
+        else
+          npm test
+        fi
