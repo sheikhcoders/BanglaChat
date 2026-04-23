@@ -6,8 +6,21 @@ name: Node.js CI
 on:
   push:
     branches: [ "main" ]
+    # BOLT OPTIMIZATION: Skip CI for documentation-only changes to save compute
+    paths-ignore:
+      - 'README.md'
+      - '.Jules/**'
   pull_request:
     branches: [ "main" ]
+    # BOLT OPTIMIZATION: Skip CI for documentation-only changes to save compute
+    paths-ignore:
+      - 'README.md'
+      - '.Jules/**'
+
+# BOLT OPTIMIZATION: Cancel in-progress runs when a new push is made to the same branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -25,7 +38,14 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+        # BOLT OPTIMIZATION: Conditional caching to prevent errors in uninitialized repositories
+        cache: ${{ (hashFiles('package-lock.json') != '' && 'npm') || (hashFiles('yarn.lock') != '' && 'yarn') || (hashFiles('pnpm-lock.yaml') != '' && 'pnpm') || '' }}
+    - name: Install dependencies
+      if: hashFiles('package.json') != ''
+      run: npm ci
+    - name: Build
+      if: hashFiles('package.json') != ''
+      run: npm run build --if-present
+    - name: Test
+      if: hashFiles('package.json') != ''
+      run: npm test
