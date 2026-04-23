@@ -6,8 +6,21 @@ name: Node.js CI
 on:
   push:
     branches: [ "main" ]
+    # BOLT OPTIMIZATION: Skip CI for documentation-only changes to save compute
+    paths-ignore:
+      - 'README.md'
+      - '.Jules/**'
   pull_request:
     branches: [ "main" ]
+    # BOLT OPTIMIZATION: Skip CI for documentation-only changes to save compute
+    paths-ignore:
+      - 'README.md'
+      - '.Jules/**'
+
+# BOLT OPTIMIZATION: Cancel in-progress runs when a new push is made to the same branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
