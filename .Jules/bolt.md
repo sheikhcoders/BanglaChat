@@ -1,0 +1,3 @@
+## 2026-04-24 - CI Compute Optimization for Uninitialized Repository
+**Learning:** In repositories with frequent documentation or journal updates, implementing paths-ignore and concurrency: cancel-in-progress: true is a critical performance win to prevent CI backlog and wasted compute resources. Additionally, CI workflows must be hardened to support uninitialized states (missing package.json/lockfiles) to prevent fatal setup errors.
+**Action:** Always include paths-ignore for documentation and use conditional logic for package manager caching/execution steps when the repository's initialization state is uncertain.
