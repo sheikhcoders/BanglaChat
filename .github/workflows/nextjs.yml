@@ -51,6 +51,11 @@ jobs:
             echo "runner=" >> $GITHUB_OUTPUT
             exit 0
           fi
+      - name: Install pnpm
+        if: steps.detect-package-manager.outputs.manager == 'pnpm'
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
