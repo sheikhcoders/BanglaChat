@@ -11,21 +11,31 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
         node-version: [18.x, 20.x, 22.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
     - uses: actions/checkout@v4
+    - name: Install pnpm
+      if: hashFiles('package.json') != '' || hashFiles('pnpm-lock.yaml') != ''
+      uses: pnpm/action-setup@v4
+      with:
+        version: 9
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+        # Only cache if pnpm-lock.yaml exists to avoid "lock file not found" errors in uninitialized repos
+        cache: ${{ hashFiles('pnpm-lock.yaml') != '' && 'pnpm' || '' }}
+    - name: Install dependencies
+      if: hashFiles('pnpm-lock.yaml') != ''
+      run: pnpm install --frozen-lockfile
+    - name: Build
+      if: hashFiles('package.json') != ''
+      run: pnpm build
+    - name: Test
+      if: hashFiles('package.json') != ''
+      run: pnpm test
