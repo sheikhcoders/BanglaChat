@@ -25,23 +25,20 @@ jobs:
     steps:
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-    - name: Install pnpm
-      uses: pnpm/action-setup@b307475762933b98ed359c036b0e51f26b63b74b # v4.0.0
-
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
       with:
         node-version: ${{ matrix.node-version }}
-        cache: ${{ hashFiles('pnpm-lock.yaml') != '' && 'pnpm' || '' }}
+        cache: ${{ hashFiles('package-lock.json') != '' && 'npm' || '' }}
 
     - name: Install dependencies
       if: hashFiles('package.json') != ''
-      run: pnpm install ${{ hashFiles('pnpm-lock.yaml') != '' && '--frozen-lockfile' || '' }}
+      run: npm ci
 
     - name: Build
       if: hashFiles('package.json') != ''
-      run: pnpm run build --if-present
+      run: npm run build --if-present
 
     - name: Test
       if: hashFiles('package.json') != ''
-      run: pnpm test
+      run: npm test

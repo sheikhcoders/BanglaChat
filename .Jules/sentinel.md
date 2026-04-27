@@ -1,6 +1,6 @@
 # Sentinel's Journal
 
-## 2026-04-27 - Supply Chain Hardening for CI Workflows
-**Vulnerability:** Use of mutable GitHub Action tags (e.g., @v4) and overly permissive default permissions in CI workflows increase the risk of supply chain attacks and privilege escalation.
-**Learning:** Pinning actions to immutable commit SHAs and defining granular job-level permissions significantly reduces the attack surface.
-**Prevention:** Always pin actions to full-length commit SHAs and follow the principle of least privilege for GHA permissions.
+## 2026-04-27 - CI Workflow Hardening
+**Vulnerability:** The Node.js CI workflow lacked explicit permission boundaries and used mutable action tags, exposing the pipeline to supply chain attacks and potential privilege escalation.
+**Learning:** Pinning actions to immutable commit SHAs and defining minimal job-level permissions ('contents: read') provides defense-in-depth against malicious action updates.
+**Prevention:** Implement mandatory SHA pinning and granular permissions for all GitHub Actions workflows.
