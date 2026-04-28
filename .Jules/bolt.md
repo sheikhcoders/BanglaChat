@@ -1,0 +1,3 @@
+## 2026-04-28 - CI Compute Optimization for Uninitialized Repositories
+**Learning:** In the early stages of a project (uninitialized state) or when documentation is a primary focus, CI workflows often trigger unnecessarily for non-code changes. Adding `paths-ignore` for documentation and agent journals significantly reduces wasted compute. Additionally, concurrency control with `cancel-in-progress: true` is vital for preventing redundant runs when multiple commits are pushed in quick succession.
+**Action:** Always implement `paths-ignore` for non-functional files and `concurrency` controls in GitHub Actions to ensure efficient resource usage from the start.
