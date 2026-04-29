@@ -6,26 +6,50 @@ name: Node.js CI
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - 'README.md'
+      - '.Jules/**'
   pull_request:
     branches: [ "main" ]
+    paths-ignore:
+      - 'README.md'
+      - '.Jules/**'
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
+    permissions:
+      contents: read
     strategy:
+      fail-fast: false
       matrix:
         node-version: [18.x, 20.x, 22.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+    - name: Install pnpm
+      uses: pnpm/action-setup@b307475762933b98ed359c036b0e51f26b63b74b # v4
+      with:
+        version: 9
+      if: hashFiles('package.json') != ''
+
     - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+        cache: ${{ hashFiles('pnpm-lock.yaml') != '' && 'pnpm' || '' }}
+      if: hashFiles('package.json') != ''
+
+    - name: Install dependencies
+      run: pnpm install ${{ hashFiles('pnpm-lock.yaml') != '' && '--frozen-lockfile' || '' }}
+      if: hashFiles('package.json') != ''
+
+    - name: Build
+      run: pnpm build
+      if: hashFiles('package.json') != '' && github.event_name == 'push'
+
+    - name: Test
+      run: pnpm test
+      if: hashFiles('package.json') != ''
