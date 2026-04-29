@@ -6,8 +6,18 @@ name: Node.js CI
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - 'README.md'
+      - '.Jules/**'
   pull_request:
     branches: [ "main" ]
+    paths-ignore:
+      - 'README.md'
+      - '.Jules/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -25,7 +35,13 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+        cache: ${{ hashFiles('package-lock.json') != '' && 'npm' || '' }}
+    - name: Install dependencies
+      if: hashFiles('package-lock.json') != ''
+      run: npm ci
+    - name: Build
+      if: hashFiles('package.json') != ''
+      run: npm run build --if-present
+    - name: Test
+      if: hashFiles('package.json') != ''
+      run: npm test
