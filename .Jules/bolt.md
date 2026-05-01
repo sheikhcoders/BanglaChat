@@ -1,0 +1,3 @@
+## 2026-05-01 - CI Compute Optimization for Uninitialized Repositories
+**Learning:** In projects that are in an uninitialized state (lacking `package.json`), standard CI workflows for Node.js and Next.js can waste significant compute resources by attempting to run build/test steps that are guaranteed to fail or are redundant. Implementing file-existence guards and path-based ignores significantly reduces runner usage and improves the developer feedback loop by canceling redundant runs.
+**Action:** Always include `paths-ignore` for non-code files (README, journals) and use `if: hashFiles('package.json') != ''` guards on CI jobs in early-stage projects. Enable `concurrency` with `cancel-in-progress: true` for non-deployment workflows to further optimize resource usage.
