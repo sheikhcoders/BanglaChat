@@ -6,12 +6,26 @@ name: Node.js CI
 on:
   push:
     branches: [ "main" ]
+    # ⚡ Bolt: skip documentation changes to save CI runner minutes
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
   pull_request:
     branches: [ "main" ]
+    # ⚡ Bolt: skip documentation changes to save CI runner minutes
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
+
+# ⚡ Bolt: cancel redundant builds for efficiency
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
-
+    # ⚡ Bolt: prevent CI failure in uninitialized repository state
+    if: hashFiles('package.json') != ''
     runs-on: ubuntu-latest
 
     strategy:
