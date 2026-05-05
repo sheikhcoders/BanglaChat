@@ -6,12 +6,24 @@ name: Node.js CI
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
   pull_request:
     branches: [ "main" ]
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
+
+# ⚡ Bolt: Cancel in-progress runs to save compute resources
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
-
+    # ⚡ Bolt: Skip run if repository is uninitialized to avoid redundant job failures
+    if: hashFiles('package.json') != ''
     runs-on: ubuntu-latest
 
     strategy:
