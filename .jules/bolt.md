@@ -1,0 +1,3 @@
+## 2026-05-06 - CI Efficiency Optimization
+**Learning:** In uninitialized repositories, GitHub Actions workflows for Node.js and Next.js will fail by default because they expect `package.json` or lockfiles to exist. Documentation and journal updates also trigger these doomed-to-fail runs, wasting compute.
+**Action:** Always add `paths-ignore` for documentation files (README.md, .jules/**) and implement job-level `if: hashFiles('package.json') != ''` guards to prevent runs in uninitialized states. Adding `cancel-in-progress: true` to the `concurrency` group further saves resources by stopping redundant builds on the same branch.
