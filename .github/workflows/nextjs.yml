@@ -8,6 +8,10 @@ on:
   # Runs on pushes targeting the default branch
   push:
     branches: ["main"]
+    # ⚡ Bolt: Skip CI for documentation-only changes to save compute resources.
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -21,6 +25,8 @@ concurrency:
 jobs:
   # Build job
   build:
+    # ⚡ Bolt: Prevent job from running in an uninitialized repository state (missing package.json).
+    if: hashFiles('package.json') != ''
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -78,6 +84,8 @@ jobs:
 
   # Deployment job
   deploy:
+    # ⚡ Bolt: Prevent job from running in an uninitialized repository state (missing package.json).
+    if: hashFiles('package.json') != ''
     permissions:
       pages: write
       id-token: write
