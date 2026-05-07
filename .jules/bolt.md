@@ -1,0 +1,3 @@
+## 2026-05-08 - CI Compute Optimization in Uninitialized States
+**Learning:** In repositories that are often reset or are in an uninitialized state (missing `package-lock.json` or `package.json`), GitHub Actions workflows can fail fatally or waste significant compute. `actions/setup-node@v4` throws an error if `cache` is set but the lockfile is missing.
+**Action:** Use conditional logic for caching: `cache: ${{ hashFiles('package-lock.json') != '' && 'npm' || '' }}`. Always guard jobs with `if: hashFiles('package.json') != ''` and use `paths-ignore` for documentation and journal updates to save resources. Ensure dependency installation is resilient by falling back to `npm install` if a lockfile is absent.
