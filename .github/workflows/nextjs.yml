@@ -8,6 +8,10 @@ on:
   # Runs on pushes targeting the default branch
   push:
     branches: ["main"]
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
+      - '.github/pull_request_template.md'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -21,6 +25,7 @@ concurrency:
 jobs:
   # Build job
   build:
+    if: hashFiles('package.json') != ''
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -42,14 +47,16 @@ jobs:
             exit 0
           else
             echo "Unable to determine package manager"
-            exit 1
+            exit 0
           fi
       - name: Setup Node
+        if: steps.detect-package-manager.outputs.manager != ''
         uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: ${{ steps.detect-package-manager.outputs.manager }}
       - name: Setup Pages
+        if: steps.detect-package-manager.outputs.manager != ''
         uses: actions/configure-pages@v5
         with:
           # Automatically inject basePath in your Next.js configuration file and disable
@@ -58,6 +65,7 @@ jobs:
           # You may remove this line if you want to manage the configuration yourself.
           static_site_generator: next
       - name: Restore cache
+        if: steps.detect-package-manager.outputs.manager != ''
         uses: actions/cache@v4
         with:
           path: |
@@ -68,16 +76,20 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}-
       - name: Install dependencies
+        if: steps.detect-package-manager.outputs.manager != ''
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
       - name: Build with Next.js
+        if: steps.detect-package-manager.outputs.manager != ''
         run: ${{ steps.detect-package-manager.outputs.runner }} next build
       - name: Upload artifact
+        if: steps.detect-package-manager.outputs.manager != ''
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./out
 
   # Deployment job
   deploy:
+    if: hashFiles('package.json') != ''
     permissions:
       pages: write
       id-token: write
