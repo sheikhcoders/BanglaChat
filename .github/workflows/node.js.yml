@@ -6,12 +6,26 @@ name: Node.js CI
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
+      - 'SECURITY.md'
   pull_request:
     branches: [ "main" ]
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
+      - 'SECURITY.md'
+
+# ⚡ Bolt: Cancel in-progress runs for the same workflow/ref to save compute
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
-
+    # ⚡ Bolt: Skip job if package.json is missing (uninitialized state)
+    if: hashFiles('package.json') != ''
     runs-on: ubuntu-latest
 
     strategy:
@@ -25,7 +39,15 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
+        # ⚡ Bolt: Only enable caching if package-lock.json exists to avoid fatal error
+        cache: ${{ hashFiles('package-lock.json') != '' && 'npm' || '' }}
+    - name: Install dependencies
+      # ⚡ Bolt: Resilient dependency installation
+      run: |
+        if [ -f package-lock.json ]; then
+          npm ci
+        else
+          npm install
+        fi
     - run: npm run build --if-present
     - run: npm test
