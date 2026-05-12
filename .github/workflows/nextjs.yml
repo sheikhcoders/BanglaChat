@@ -4,10 +4,14 @@
 #
 name: Deploy Next.js site to Pages
 
+# ⚡ Bolt: Added paths-ignore to skip documentation-only changes
 on:
   # Runs on pushes targeting the default branch
   push:
     branches: ["main"]
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -21,6 +25,8 @@ concurrency:
 jobs:
   # Build job
   build:
+    # ⚡ Bolt: Skip build if package.json is missing (uninitialized state)
+    if: hashFiles('package.json') != ''
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -78,6 +84,8 @@ jobs:
 
   # Deployment job
   deploy:
+    # ⚡ Bolt: Skip deploy if package.json is missing (uninitialized state)
+    if: hashFiles('package.json') != ''
     permissions:
       pages: write
       id-token: write
