@@ -3,15 +3,28 @@
 
 name: Node.js CI
 
+# ⚡ Bolt: Added paths-ignore to skip documentation-only changes
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
   pull_request:
     branches: [ "main" ]
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
+
+# ⚡ Bolt: Cancel in-progress runs for the same branch/PR to save compute
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
-
+    # ⚡ Bolt: Skip build if package.json is missing (uninitialized state)
+    if: hashFiles('package.json') != ''
     runs-on: ubuntu-latest
 
     strategy:
@@ -21,11 +34,23 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+
+    # ⚡ Bolt: Use pnpm as the mandatory package manager
+    - uses: pnpm/action-setup@v4
+      with:
+        version: 9
+
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+        cache: 'pnpm'
+
+    - name: Install dependencies
+      run: pnpm install
+
+    - name: Build
+      run: pnpm run build --if-present
+
+    - name: Test
+      run: pnpm test

@@ -1,0 +1,3 @@
+## 2026-05-11 - CI Optimization in Uninitialized Repository State
+**Learning:** In an uninitialized repository (lacking `package.json`), standard CI workflows for Node.js and Next.js fail immediately. Implementing job-level `if: hashFiles('package.json') != ''` guards prevents these fatal errors and saves compute resources by skipping redundant build/test cycles during the bootstrap phase. Additionally, `paths-ignore` for documentation and journal files further reduces unnecessary CI triggers.
+**Action:** Always implement job guards and `paths-ignore` for documentation in the early stages of a project to maintain a clean and efficient CI/CD pipeline while the application foundation is being built.
