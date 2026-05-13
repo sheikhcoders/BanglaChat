@@ -6,8 +6,20 @@ name: Node.js CI
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
+      - 'SECURITY.md'
   pull_request:
     branches: [ "main" ]
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
+      - 'SECURITY.md'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -21,11 +33,45 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+
+    - name: Detect package manager
+      id: detect-package-manager
+      run: |
+        if [ -f "pnpm-lock.yaml" ]; then
+          echo "manager=pnpm" >> $GITHUB_OUTPUT
+          echo "command=install --frozen-lockfile" >> $GITHUB_OUTPUT
+        elif [ -f "package-lock.json" ]; then
+          echo "manager=npm" >> $GITHUB_OUTPUT
+          echo "command=ci" >> $GITHUB_OUTPUT
+        else
+          echo "manager=pnpm" >> $GITHUB_OUTPUT
+          echo "command=install" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Install pnpm
+      if: steps.detect-package-manager.outputs.manager == 'pnpm'
+      uses: pnpm/action-setup@v4
+      with:
+        version: 10
+        run_install: false
+
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+        # Performance: Only enable caching if a lockfile is present to avoid setup-node failures
+        cache: ${{ (hashFiles('pnpm-lock.yaml') != '' || hashFiles('package-lock.json') != '') && steps.detect-package-manager.outputs.manager || '' }}
+
+    - name: Install dependencies
+      if: hashFiles('package.json') != ''
+      run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
+
+    - name: Build
+      if: hashFiles('package.json') != ''
+      run: ${{ steps.detect-package-manager.outputs.manager }} run build --if-present
+
+    - name: Test
+      if: hashFiles('package.json') != ''
+      run: ${{ steps.detect-package-manager.outputs.manager }} test
