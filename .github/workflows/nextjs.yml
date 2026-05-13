@@ -45,10 +45,8 @@ jobs:
             echo "runner=npx --no-install" >> $GITHUB_OUTPUT
             exit 0
           else
-            # Performance: Exit gracefully in uninitialized repos to avoid redundant failure alerts
-            # until the project is properly scaffolded with a package.json.
             echo "Unable to determine package manager"
-            exit 0
+            exit 1
           fi
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -74,10 +72,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}-
       - name: Install dependencies
-        if: steps.detect-package-manager.outputs.manager != ''
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
       - name: Build with Next.js
-        if: steps.detect-package-manager.outputs.manager != ''
         run: ${{ steps.detect-package-manager.outputs.runner }} next build
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
