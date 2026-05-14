@@ -1,0 +1,3 @@
+## 2026-05-14 - CI Optimization for Uninitialized States
+**Learning:** In repositories that may be uninitialized (missing package.json or lockfiles), using hardcoded `cache: 'npm'` in `actions/setup-node` causes workflow failure. Dynamic detection of the package manager combined with conditional caching logic using `hashFiles` prevents these failures while still providing performance benefits when the repository is initialized.
+**Action:** Always use dynamic package manager detection and conditional `hashFiles` checks for `cache` in GitHub Actions to ensure robust and efficient CI across all repository states.
