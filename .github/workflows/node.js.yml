@@ -3,11 +3,27 @@
 
 name: Node.js CI
 
+# ⚡ Bolt: optimized CI workflow to reduce resource consumption and increase feedback speed.
 on:
   push:
     branches: [ "main" ]
+    # ⚡ Bolt: ignore non-code changes to save CI compute
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
+      - 'SECURITY.md'
   pull_request:
     branches: [ "main" ]
+    # ⚡ Bolt: ignore non-code changes to save CI compute
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
+      - 'SECURITY.md'
+
+# ⚡ Bolt: cancel redundant builds on the same branch to save runner minutes
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -21,11 +37,41 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - name: Detect package manager
+      id: detect-package-manager
+      # ⚡ Bolt: dynamic detection allows using faster package managers like pnpm if present
+      run: |
+        if [ -f "${{ github.workspace }}/pnpm-lock.yaml" ]; then
+          echo "manager=pnpm" >> $GITHUB_OUTPUT
+          echo "command=install" >> $GITHUB_OUTPUT
+          exit 0
+        elif [ -f "${{ github.workspace }}/package.json" ]; then
+          echo "manager=npm" >> $GITHUB_OUTPUT
+          echo "command=ci" >> $GITHUB_OUTPUT
+          exit 0
+        else
+          echo "manager=" >> $GITHUB_OUTPUT
+          echo "command=" >> $GITHUB_OUTPUT
+          exit 0
+        fi
+    - name: Install pnpm
+      if: steps.detect-package-manager.outputs.manager == 'pnpm'
+      uses: pnpm/action-setup@v4
+      # ⚡ Bolt: pnpm v10 is faster and more resource-efficient
+      with:
+        version: 10
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+        # ⚡ Bolt: enable caching for the specific package manager to speed up subsequent runs
+        cache: ${{ (steps.detect-package-manager.outputs.manager == 'pnpm' && 'pnpm') || (steps.detect-package-manager.outputs.manager == 'npm' && 'npm') || '' }}
+    - name: Install dependencies
+      if: steps.detect-package-manager.outputs.manager != ''
+      run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
+    - name: Build
+      if: steps.detect-package-manager.outputs.manager != ''
+      run: ${{ steps.detect-package-manager.outputs.manager }} run build --if-present
+    - name: Test
+      if: steps.detect-package-manager.outputs.manager != ''
+      run: ${{ steps.detect-package-manager.outputs.manager }} test
