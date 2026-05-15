@@ -1,0 +1,3 @@
+## 2026-05-14 - Bilingual Accessible Foundations
+**Learning:** In uninitialized repositories where documentation is the primary interface, a bilingual (English/Bengali) foundation using semantic HTML and localized 'lang' attributes ensures immediate accessibility and inclusion for the target audience.
+**Action:** Use `<p lang="bn">` or `<span lang="bn">` for Bengali text in READMEs to ensure correct screen reader pronunciation and provide equivalent information in both languages.
