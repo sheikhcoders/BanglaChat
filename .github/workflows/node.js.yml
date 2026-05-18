@@ -24,8 +24,14 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  # ⚡ Bolt: Future-proof CI by opting into Node.js 24 for actions to avoid deprecation warnings
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build:
+    # ⚡ Bolt: Skip entire job in uninitialized repository state to maximize compute efficiency
+    if: hashFiles('package.json') != ''
     runs-on: ubuntu-latest
 
     strategy:
@@ -47,8 +53,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          # ⚡ Bolt: Efficient dependency caching for faster subsequent runs
-          cache: 'pnpm'
+          # ⚡ Bolt: Conditional caching to prevent failures when lockfile is missing
+          cache: ${{ hashFiles('pnpm-lock.yaml') != '' && 'pnpm' || '' }}
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
