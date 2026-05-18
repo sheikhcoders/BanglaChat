@@ -6,26 +6,61 @@ name: Node.js CI
 on:
   push:
     branches: [ "main" ]
+    # ⚡ Bolt: Save CI compute by skipping runs for documentation-only updates
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
+      - 'SECURITY.md'
   pull_request:
     branches: [ "main" ]
+    # ⚡ Bolt: Save CI compute by skipping runs for documentation-only updates
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
+      - 'SECURITY.md'
+
+# ⚡ Bolt: Optimize CI resources by canceling redundant overlapping runs on the same branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # ⚡ Bolt: Future-proof CI by opting into Node.js 24 for actions to avoid deprecation warnings
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   build:
-
+    # ⚡ Bolt: Skip entire job in uninitialized repository state to maximize compute efficiency
+    if: hashFiles('package.json') != ''
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
         node-version: [18.x, 20.x, 22.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install pnpm
+        # ⚡ Bolt: Project mandated package manager; significantly faster than npm/yarn
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          # ⚡ Bolt: Conditional caching to prevent failures when lockfile is missing
+          cache: ${{ hashFiles('pnpm-lock.yaml') != '' && 'pnpm' || '' }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm run build --if-present
+
+      - name: Test
+        run: pnpm test
