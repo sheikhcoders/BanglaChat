@@ -1,0 +1,3 @@
+## 2026-05-20 - CI Resilience and pnpm Best Practices
+**Learning:** `pnpm install --frozen-lockfile` will fail in CI if no `pnpm-lock.yaml` is present. While pnpm is mandated, detection logic must verify lockfile existence before applying frozen flags to maintain stability in new or uninitialized projects. Additionally, job-level `if: hashFiles('package.json') != ''` guards are essential for avoiding redundant failures in uninitialized repositories.
+**Action:** Always use dynamic package manager detection that checks for specific lockfiles before applying `--frozen-lockfile` or `ci` flags, and use job guards in early-stage projects.
