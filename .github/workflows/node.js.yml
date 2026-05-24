@@ -6,12 +6,21 @@ name: Node.js CI
 on:
   push:
     branches: [ "main" ]
+    # BOLT OPTIMIZATION: Skip CI runs for documentation-only changes to conserve compute resources.
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
   pull_request:
     branches: [ "main" ]
+    # BOLT OPTIMIZATION: Skip CI runs for documentation-only changes to conserve compute resources.
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
 
 jobs:
   build:
-
+    # BOLT OPTIMIZATION: Prevent workflow failures and resource waste in uninitialized repositories.
+    if: hashFiles('package.json') != ''
     runs-on: ubuntu-latest
 
     strategy:
@@ -21,11 +30,53 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+
+    - name: Detect package manager
+      id: detect-package-manager
+      run: |
+        if [ -f "${{ github.workspace }}/pnpm-lock.yaml" ]; then
+          echo "manager=pnpm" >> $GITHUB_OUTPUT
+          exit 0
+        elif [ -f "${{ github.workspace }}/yarn.lock" ]; then
+          echo "manager=yarn" >> $GITHUB_OUTPUT
+          exit 0
+        else
+          echo "manager=npm" >> $GITHUB_OUTPUT
+          exit 0
+        fi
+
+    - name: Install pnpm
+      if: steps.detect-package-manager.outputs.manager == 'pnpm'
+      uses: pnpm/action-setup@a32239d4e389a3fa59f5f619688eb93ae099c21f # v4.1.0
+      with:
+        version: 10
+
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
+        cache: ${{ steps.detect-package-manager.outputs.manager }}
+
+    - name: Install dependencies
+      run: |
+        if [ "${{ steps.detect-package-manager.outputs.manager }}" == "pnpm" ]; then
+          pnpm install --frozen-lockfile
+        elif [ "${{ steps.detect-package-manager.outputs.manager }}" == "yarn" ]; then
+          yarn install --frozen-lockfile
+        else
+          npm ci
+        fi
+
     - run: npm run build --if-present
+      if: steps.detect-package-manager.outputs.manager == 'npm'
+    - run: yarn build --if-present
+      if: steps.detect-package-manager.outputs.manager == 'yarn'
+    - run: pnpm run build --if-present
+      if: steps.detect-package-manager.outputs.manager == 'pnpm'
+
     - run: npm test
+      if: steps.detect-package-manager.outputs.manager == 'npm'
+    - run: yarn test
+      if: steps.detect-package-manager.outputs.manager == 'yarn'
+    - run: pnpm test
+      if: steps.detect-package-manager.outputs.manager == 'pnpm'
