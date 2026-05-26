@@ -6,13 +6,25 @@ name: Node.js CI
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
+      - 'SECURITY.md'
   pull_request:
     branches: [ "main" ]
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
+      - 'SECURITY.md'
+
+permissions:
+  contents: read
 
 jobs:
   build:
-
+    if: hashFiles('package.json') != ''
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     strategy:
       matrix:
@@ -20,12 +32,50 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      with:
+        persist-credentials: false
+
+    - name: Install pnpm
+      uses: pnpm/action-setup@a32239d4e389a3fa59f5f619688eb93ae099c21f # v4.1.0
+      with:
+        version: 10
+
+    - name: Detect package manager
+      id: detect-package-manager
+      run: |
+        if [ -f "${{ github.workspace }}/pnpm-lock.yaml" ]; then
+          echo "manager=pnpm" >> $GITHUB_OUTPUT
+          echo "command=install" >> $GITHUB_OUTPUT
+          echo "runner=pnpm" >> $GITHUB_OUTPUT
+          exit 0
+        elif [ -f "${{ github.workspace }}/yarn.lock" ]; then
+          echo "manager=yarn" >> $GITHUB_OUTPUT
+          echo "command=install" >> $GITHUB_OUTPUT
+          echo "runner=yarn" >> $GITHUB_OUTPUT
+          exit 0
+        elif [ -f "${{ github.workspace }}/package.json" ]; then
+          echo "manager=npm" >> $GITHUB_OUTPUT
+          echo "command=ci" >> $GITHUB_OUTPUT
+          echo "runner=npm" >> $GITHUB_OUTPUT
+          exit 0
+        else
+          echo "Unable to determine package manager"
+          exit 1
+        fi
+
     - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+        cache: ${{ steps.detect-package-manager.outputs.manager }}
+
+    - name: Install dependencies
+      run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
+
+    - name: Build
+      run: ${{ steps.detect-package-manager.outputs.runner }} run build --if-present
+
+    - name: Test
+      run: ${{ steps.detect-package-manager.outputs.runner }} test
