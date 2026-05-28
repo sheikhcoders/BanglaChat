@@ -15,6 +15,7 @@ jobs:
     permissions:
       contents: read
     timeout-minutes: 15
+    if: hashFiles('package.json') != ''
 
     strategy:
       matrix:
