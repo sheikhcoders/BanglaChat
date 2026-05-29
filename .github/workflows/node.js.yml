@@ -5,9 +5,17 @@ name: Node.js CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
+    paths-ignore:
+      - "README.md"
+      - ".github/PULL_REQUEST_TEMPLATE.md"
+      - ".jules/**"
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
+    paths-ignore:
+      - "README.md"
+      - ".github/PULL_REQUEST_TEMPLATE.md"
+      - ".jules/**"
 
 jobs:
   build:
