@@ -1,0 +1,3 @@
+## 2026-06-01 - CI/CD Pipeline Efficiency Optimization
+**Learning:** In an uninitialized repository state (missing `package.json`), CI workflows will naturally fail if they attempt to install dependencies or run scripts. Aggressively optimizing these workflows with `paths-ignore` for documentation and job-level `hashFiles` guards prevents wasted compute resources and noisy failure notifications during the early initialization phase.
+**Action:** Always implement `paths-ignore` for non-code files and job-level guards for `package.json` presence in early-stage Node.js projects to maximize CI efficiency.
