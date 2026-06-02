@@ -1,0 +1,3 @@
+## 2026-06-02 - CI/CD Optimization for Uninitialized Repositories
+**Learning:** In repositories that are in an early or uninitialized state, GitHub Action workflows can cause excessive noise and waste compute resources by failing on every push. `paths-ignore` for documentation and job-level guards like `if: hashFiles('package.json') != ''` are essential to prevent this. Additionally, migrating to `pnpm` and pinning action SHAs improves build speed, reliability, and security.
+**Action:** Always implement job-level guards and `paths-ignore` when setting up or optimizing CI/CD for new projects to ensure "compute efficiency" from day one.
