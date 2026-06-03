@@ -19,7 +19,7 @@ on:
 
 jobs:
   build:
-
+    if: hashFiles('package.json') != ''
     runs-on: ubuntu-latest
 
     strategy:
