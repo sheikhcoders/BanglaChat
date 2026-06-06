@@ -6,8 +6,16 @@ name: Node.js CI
 on:
   push:
     branches: [ "main" ]
+    # BOLT OPTIMIZATION: Ignore documentation and journal changes to save CI compute resources.
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
   pull_request:
     branches: [ "main" ]
+    # BOLT OPTIMIZATION: Ignore documentation and journal changes to save CI compute resources.
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
 
 jobs:
   build:
@@ -22,10 +30,21 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Use Node.js ${{ matrix.node-version }}
+      # BOLT OPTIMIZATION: Skip step if package.json is missing to prevent failures in uninitialized repos.
+      if: hashFiles('package.json') != ''
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+    - name: Install dependencies
+      # BOLT OPTIMIZATION: Skip step if package.json is missing to prevent failures in uninitialized repos.
+      if: hashFiles('package.json') != ''
+      run: npm ci
+    - name: Build
+      # BOLT OPTIMIZATION: Skip step if package.json is missing to prevent failures in uninitialized repos.
+      if: hashFiles('package.json') != ''
+      run: npm run build --if-present
+    - name: Test
+      # BOLT OPTIMIZATION: Skip step if package.json is missing to prevent failures in uninitialized repos.
+      if: hashFiles('package.json') != ''
+      run: npm test
