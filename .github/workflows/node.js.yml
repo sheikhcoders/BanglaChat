@@ -6,8 +6,14 @@ name: Node.js CI
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
   pull_request:
     branches: [ "main" ]
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
 
 jobs:
   build:
@@ -21,11 +27,41 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - name: Detect package manager
+      id: detect-package-manager
+      run: |
+        if [ -f "pnpm-lock.yaml" ]; then
+          echo "manager=pnpm" >> $GITHUB_OUTPUT
+          echo "command=install" >> $GITHUB_OUTPUT
+          exit 0
+        elif [ -f "yarn.lock" ]; then
+          echo "manager=yarn" >> $GITHUB_OUTPUT
+          echo "command=install" >> $GITHUB_OUTPUT
+          exit 0
+        elif [ -f "package.json" ]; then
+          echo "manager=npm" >> $GITHUB_OUTPUT
+          echo "command=ci" >> $GITHUB_OUTPUT
+          exit 0
+        else
+          echo "No package manager detected"
+          exit 0
+        fi
+    - name: Install pnpm
+      if: steps.detect-package-manager.outputs.manager == 'pnpm'
+      uses: pnpm/action-setup@v4
+      with:
+        run_install: false
     - name: Use Node.js ${{ matrix.node-version }}
+      if: steps.detect-package-manager.outputs.manager != ''
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+        cache: ${{ steps.detect-package-manager.outputs.manager }}
+    - name: Install dependencies
+      if: steps.detect-package-manager.outputs.manager != ''
+      run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
+    - name: Build and Test
+      if: steps.detect-package-manager.outputs.manager != ''
+      run: |
+        ${{ steps.detect-package-manager.outputs.manager }} run build --if-present
+        ${{ steps.detect-package-manager.outputs.manager }} test
