@@ -1,0 +1,3 @@
+## 2026-06-07 - Robust CI Workflow Detection and Efficiency
+**Learning:** Hardcoding package managers in CI workflows can cause breaking changes when they don't match the project's actual structure. Implementing a robust detection step for pnpm, yarn, and npm allows for flexible caching and execution. Additionally, using the output of this detection step as a guard for subsequent steps effectively handles uninitialized repositories without excessive repetition of `hashFiles` checks.
+**Action:** Always use dynamic package manager detection in CI workflows to ensure compatibility and leverage `paths-ignore` for documentation to save compute resources.
