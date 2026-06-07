@@ -28,31 +28,13 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: read
-    outputs:
-      has_package_json: ${{ steps.check-package-json.outputs.exists }}
     steps:
       - name: Checkout
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v4.1.7
-
-      - name: Check for package.json
-        id: check-package-json
-        run: |
-          if [ -f "package.json" ]; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-          fi
-
       - name: Detect package manager
-        if: steps.check-package-json.outputs.exists == 'true'
         id: detect-package-manager
         run: |
-          if [ -f "${{ github.workspace }}/pnpm-lock.yaml" ]; then
-            echo "manager=pnpm" >> $GITHUB_OUTPUT
-            echo "command=install --no-frozen-lockfile" >> $GITHUB_OUTPUT
-            echo "runner=pnpm" >> $GITHUB_OUTPUT
-            exit 0
-          elif [ -f "${{ github.workspace }}/yarn.lock" ]; then
+          if [ -f "${{ github.workspace }}/yarn.lock" ]; then
             echo "manager=yarn" >> $GITHUB_OUTPUT
             echo "command=install" >> $GITHUB_OUTPUT
             echo "runner=yarn" >> $GITHUB_OUTPUT
@@ -66,22 +48,12 @@ jobs:
             echo "Unable to determine package manager"
             exit 1
           fi
-
-      - name: Install pnpm
-        if: steps.detect-package-manager.outputs.manager == 'pnpm'
-        uses: pnpm/action-setup@feaa9040e632e8f9582a96a4a15993888357a701 # v4.0.0
-        with:
-          version: 9
-
       - name: Setup Node
-        if: steps.check-package-json.outputs.exists == 'true'
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v4.0.2
         with:
           node-version: "20"
           cache: ${{ steps.detect-package-manager.outputs.manager }}
-
       - name: Setup Pages
-        if: steps.check-package-json.outputs.exists == 'true'
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v5.0.0
         with:
           # Automatically inject basePath in your Next.js configuration file and disable
@@ -89,29 +61,21 @@ jobs:
           #
           # You may remove this line if you want to manage the configuration yourself.
           static_site_generator: next
-
       - name: Restore cache
-        if: steps.check-package-json.outputs.exists == 'true'
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v4.0.2
         with:
           path: |
             .next/cache
           # Generate a new cache whenever packages or source files change.
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock', '**/pnpm-lock.yaml') }}-${{ hashFiles('**.[jt]s', '**.[jt]sx') }}
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}-${{ hashFiles('**.[jt]s', '**.[jt]sx') }}
           # If source files changed but packages didn't, rebuild from a prior cache.
           restore-keys: |
-            ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock', '**/pnpm-lock.yaml') }}-
-
+            ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}-
       - name: Install dependencies
-        if: steps.check-package-json.outputs.exists == 'true'
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
-
       - name: Build with Next.js
-        if: steps.check-package-json.outputs.exists == 'true'
         run: ${{ steps.detect-package-manager.outputs.runner }} next build
-
       - name: Upload artifact
-        if: steps.check-package-json.outputs.exists == 'true'
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v3.0.1
         with:
           path: ./out
@@ -128,7 +92,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: build
-    if: needs.build.outputs.has_package_json == 'true'
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
