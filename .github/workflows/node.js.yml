@@ -6,8 +6,10 @@ name: Node.js CI
 on:
   push:
     branches: [ "main" ]
+    paths-ignore: ['README.md', '.jules/**', '.github/PULL_REQUEST_TEMPLATE.md']
   pull_request:
     branches: [ "main" ]
+    paths-ignore: ['README.md', '.jules/**', '.github/PULL_REQUEST_TEMPLATE.md']
 
 jobs:
   build:
