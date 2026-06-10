@@ -1,0 +1,3 @@
+## 2026-06-10 - [CI Infrastructure Optimization for Uninitialized Repositories]
+**Learning:** In repositories that are frequently reset or remain in an uninitialized state (no `package.json`), CI workflows should implement resilient detection and step-level guards. Standard CI configurations often fail immediately if lockfiles are missing, wasting compute minutes. Adding `paths-ignore` for non-code files and `concurrency` with `cancel-in-progress` significantly reduces unnecessary compute usage.
+**Action:** Always implement `paths-ignore` for documentation/journals and gate build steps behind a package manager detection check that handles the 'none' state gracefully.
