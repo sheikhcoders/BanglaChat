@@ -6,13 +6,29 @@ name: Node.js CI
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
+      - '.github/PULL_REQUEST_TEMPLATE.md'
   pull_request:
     branches: [ "main" ]
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
+      - '.github/PULL_REQUEST_TEMPLATE.md'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
 
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     strategy:
       matrix:
@@ -20,12 +36,31 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v4.1.1
+    - name: Check for package.json
+      id: check_files
+      run: |
+        if [ -f "package.json" ]; then
+          echo "has_package_json=true" >> $GITHUB_OUTPUT
+        else
+          echo "has_package_json=false" >> $GITHUB_OUTPUT
+        fi
+        if [ -f "package-lock.json" ]; then
+          echo "has_lockfile=true" >> $GITHUB_OUTPUT
+        else
+          echo "has_lockfile=false" >> $GITHUB_OUTPUT
+        fi
     - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v4.0.0
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+        cache: ${{ steps.check_files.outputs.has_lockfile == 'true' && 'npm' || '' }}
+    - name: Install dependencies
+      run: npm ci
+      if: steps.check_files.outputs.has_lockfile == 'true'
+    - name: Build
+      run: npm run build --if-present
+      if: steps.check_files.outputs.has_package_json == 'true'
+    - name: Test
+      run: npm test
+      if: steps.check_files.outputs.has_package_json == 'true'
