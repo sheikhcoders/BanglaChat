@@ -1,0 +1,3 @@
+## 2026-06-12 - [CI/CD Efficiency in Sparse Repositories]
+**Learning:** In repositories that are frequently reset or are in a sparse state (missing `package.json`), CI workflows can fail or waste resources if not properly guarded. `paths-ignore` for non-code files and job-level `if: hashFiles('package.json') != ''` guards significantly reduce unnecessary compute. Also, `actions/setup-node` caching must be conditioned on lockfile existence to prevent terminal errors when no packages are present.
+**Action:** Always implement job-level guards and conditional caching in CI workflows when working in early-stage or sparse repositories. Respect existing `cancel-in-progress: false` constraints for production deployment pipelines.
