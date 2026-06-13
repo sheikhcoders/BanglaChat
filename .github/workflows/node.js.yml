@@ -6,12 +6,26 @@ name: Node.js CI
 on:
   push:
     branches: [ "main" ]
+    # BOLT: Skip CI for documentation-only changes to save compute resources
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
   pull_request:
     branches: [ "main" ]
+    # BOLT: Skip CI for documentation-only changes to save compute resources
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
+
+# BOLT: Cancel in-progress runs for the same branch to save CI minutes
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
-
+    # BOLT: Avoid running CI in uninitialized repository states (missing package.json)
+    if: hashFiles('package.json') != ''
     runs-on: ubuntu-latest
 
     strategy:
@@ -25,6 +39,8 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
+        # BOLT: Enable caching for faster subsequent runs.
+        # Note: actions/setup-node@v4 requires a lockfile to be present for caching to work.
         cache: 'npm'
     - run: npm ci
     - run: npm run build --if-present
