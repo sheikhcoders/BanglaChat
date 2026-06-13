@@ -1,0 +1,3 @@
+## 2026-06-12 - Bilingual Documentation Accessibility
+**Learning:** For apps targeting specific language groups, bilingual documentation (English/Bengali) with semantic `<span lang="...">` tags significantly improves accessibility for screen readers. The transliteration of technical terms like 'Pull Request' must be culturally and linguistically accurate—'পুল রিকোয়েস্ট' (Pul Request) is the correct term, whereas 'পুলি' (Puli) incorrectly refers to a mechanical pulley or a dumpling.
+**Action:** Always use semantic language tags for non-English content and verify technical transliterations with the project's established vocabulary.
