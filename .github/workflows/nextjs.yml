@@ -8,6 +8,9 @@ on:
   # Runs on pushes targeting the default branch
   push:
     branches: ["main"]
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -21,7 +24,10 @@ concurrency:
 jobs:
   # Build job
   build:
+    # BOLT: Skip build in uninitialized repos to save compute resources.
+    if: hashFiles('package.json') != ''
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
     steps:
@@ -78,6 +84,8 @@ jobs:
 
   # Deployment job
   deploy:
+    # BOLT: Ensure deployment only triggers on main branch with a valid package.
+    if: github.ref == 'refs/heads/main' && hashFiles('package.json') != ''
     permissions:
       pages: write
       id-token: write
@@ -85,6 +93,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: build
     steps:
       - name: Deploy to GitHub Pages
