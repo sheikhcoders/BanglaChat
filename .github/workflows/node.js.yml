@@ -6,12 +6,21 @@ name: Node.js CI
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - 'README.md'
+      - '.github/PULL_REQUEST_TEMPLATE.md'
+      - '.jules/**'
   pull_request:
     branches: [ "main" ]
+    paths-ignore:
+      - 'README.md'
+      - '.github/PULL_REQUEST_TEMPLATE.md'
+      - '.jules/**'
 
 jobs:
   build:
-
+    # BOLT: Prevent failures in uninitialized repositories
+    if: hashFiles('package.json') != ''
     runs-on: ubuntu-latest
 
     strategy:
@@ -20,12 +29,13 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v4.1.7
     - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v4.0.3
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
+        # BOLT: Conditional caching to avoid errors when lockfile is missing
+        cache: ${{ hashFiles('package-lock.json') != '' && 'npm' || '' }}
     - run: npm ci
     - run: npm run build --if-present
     - run: npm test
