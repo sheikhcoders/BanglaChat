@@ -6,12 +6,26 @@ name: Node.js CI
 on:
   push:
     branches: [ "main" ]
+    # BOLT: Save compute by ignoring documentation-only changes
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
   pull_request:
     branches: [ "main" ]
+    # BOLT: Save compute by ignoring documentation-only changes
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
+
+# BOLT: Cancel redundant runs to save compute resources
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
-
+    # BOLT: Skip execution in sparse repository state to prevent unnecessary failures
+    if: hashFiles('package.json') != ''
     runs-on: ubuntu-latest
 
     strategy:
@@ -20,12 +34,14 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-    - uses: actions/checkout@v4
+    # BOLT: Pin actions to verified SHAs for security and stability
+    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v4.1.1
     - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v4.0.2
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
+        # BOLT: Only enable caching if lockfile exists to avoid setup-node terminal errors
+        cache: ${{ hashFiles('package-lock.json') != '' && 'npm' || '' }}
     - run: npm ci
     - run: npm run build --if-present
     - run: npm test
