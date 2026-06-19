@@ -1,0 +1,3 @@
+## 2026-06-19 - Contributor UX and Persona Boundaries
+**Learning:** While repo maintenance (CI guards) can improve the developer experience, it falls outside the "Palette" UX-focused persona if it doesn't directly impact the end-user interface or core accessibility. Documentation accessibility (bilingual README with semantic tags) is a better fit for a developer UX win when no app UI exists.
+**Action:** Strictly separate infrastructure changes from UX/documentation improvements; stick to visual, interaction, and accessibility enhancements that directly benefit the user or the human contributor's interaction with the codebase.
