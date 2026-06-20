@@ -8,6 +8,10 @@ on:
   # Runs on pushes targeting the default branch
   push:
     branches: ["main"]
+    # BOLT: Ignore documentation-only changes to save compute resources
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -21,6 +25,8 @@ concurrency:
 jobs:
   # Build job
   build:
+    # BOLT: Skip the entire job if package.json is missing (sparse repo) to prevent redundant failures
+    if: hashFiles('package.json') != ''
     runs-on: ubuntu-latest
     permissions:
       contents: read
