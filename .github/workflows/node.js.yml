@@ -6,11 +6,25 @@ name: Node.js CI
 on:
   push:
     branches: [ "main" ]
+    # BOLT: Ignore documentation-only changes to save compute resources
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
   pull_request:
     branches: [ "main" ]
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
+
+# BOLT: Cancel in-progress runs for the same branch to optimize concurrency usage
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
+    # BOLT: Skip the entire job if package.json is missing (sparse repo) to prevent redundant failures
+    if: hashFiles('package.json') != ''
 
     runs-on: ubuntu-latest
 
