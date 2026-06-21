@@ -6,12 +6,26 @@ name: Node.js CI
 on:
   push:
     branches: [ "main" ]
+    # BOLT: Skip CI for documentation-only changes to save compute resources
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
   pull_request:
     branches: [ "main" ]
+    # BOLT: Skip CI for documentation-only changes to save compute resources
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
+
+# BOLT: cancel-in-progress: true saves compute by terminating redundant runs on new pushes
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
-
+    # BOLT: Skip job in uninitialized repos (no package.json) to prevent guaranteed failures and compute waste
+    if: hashFiles('package.json') != ''
     runs-on: ubuntu-latest
 
     strategy:
@@ -25,7 +39,8 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
+        # BOLT: prevent setup-node failure when lockfile is missing in sparse repo
+        cache: ${{ hashFiles('package-lock.json') != '' && 'npm' || '' }}
     - run: npm ci
     - run: npm run build --if-present
     - run: npm test
