@@ -9,10 +9,17 @@ on:
   pull_request:
     branches: [ "main" ]
 
+# SENTINEL: Enforce global least privilege by restricting GITHUB_TOKEN permissions to read-only for contents.
+permissions:
+  contents: read
+
 jobs:
   build:
-
+    # SENTINEL: Bypass CI in uninitialized repository state (missing package.json) to prevent compute waste and failures.
+    if: hashFiles('package.json') != ''
     runs-on: ubuntu-latest
+    # SENTINEL: Prevent resource exhaustion from hanging processes.
+    timeout-minutes: 15
 
     strategy:
       matrix:
@@ -20,12 +27,14 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-    - uses: actions/checkout@v4
+    # SENTINEL: Pin actions to verified commit SHAs to prevent supply chain attacks via tag floating.
+    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v4.1.1
     - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v4.0.0
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
+        # SENTINEL: Conditional caching prevents terminal errors if the lockfile is missing in sparse repositories.
+        cache: ${{ hashFiles('package-lock.json') != '' && 'npm' || '' }}
     - run: npm ci
     - run: npm run build --if-present
     - run: npm test

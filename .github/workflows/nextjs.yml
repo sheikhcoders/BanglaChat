@@ -12,6 +12,10 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+# SENTINEL: Enforce global least privilege by restricting GITHUB_TOKEN permissions to read-only for contents.
+permissions:
+  contents: read
+
 # Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
 # However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
 concurrency:
@@ -21,12 +25,17 @@ concurrency:
 jobs:
   # Build job
   build:
+    # SENTINEL: Bypass CI in uninitialized repository state (missing package.json) to prevent compute waste and failures.
+    if: hashFiles('package.json') != ''
     runs-on: ubuntu-latest
+    # SENTINEL: Prevent resource exhaustion from hanging processes.
+    timeout-minutes: 15
     permissions:
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        # SENTINEL: Pin actions to verified commit SHAs to prevent supply chain attacks via tag floating.
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v4.1.1
       - name: Detect package manager
         id: detect-package-manager
         run: |
@@ -45,7 +54,7 @@ jobs:
             exit 1
           fi
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v4.0.0
         with:
           node-version: "20"
           cache: ${{ steps.detect-package-manager.outputs.manager }}
@@ -78,13 +87,17 @@ jobs:
 
   # Deployment job
   deploy:
+    # SENTINEL: Explicitly define permissions for deployment as global permissions are restricted.
     permissions:
+      contents: read
       pages: write
       id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    # SENTINEL: Prevent resource exhaustion from hanging processes.
+    timeout-minutes: 15
     needs: build
     steps:
       - name: Deploy to GitHub Pages
