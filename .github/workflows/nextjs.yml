@@ -12,6 +12,10 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+# SENTINEL: Enforce global least-privilege permissions
+permissions:
+  contents: read
+
 # Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
 # However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
 concurrency:
@@ -21,12 +25,16 @@ concurrency:
 jobs:
   # Build job
   build:
+    # SENTINEL: Prevent failures in uninitialized repository state
+    if: hashFiles('package.json') != ''
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
+    timeout-minutes: 15
+    outputs:
+      has_package: ${{ steps.detect-package-manager.outputs.manager != '' }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        # SENTINEL: Pin to df4cb1c069e1874edd31b4311f1884172cec0e10 (actions/checkout@v4)
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
       - name: Detect package manager
         id: detect-package-manager
         run: |
@@ -45,12 +53,14 @@ jobs:
             exit 1
           fi
       - name: Setup Node
-        uses: actions/setup-node@v4
+        # SENTINEL: Pin to 48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e (actions/setup-node@v4)
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         with:
           node-version: "20"
           cache: ${{ steps.detect-package-manager.outputs.manager }}
       - name: Setup Pages
-        uses: actions/configure-pages@v5
+        # SENTINEL: Pin to 983d773019ff3a17bc9b4b93108d29cae81897b0 (actions/configure-pages@v5)
+        uses: actions/configure-pages@983d773019ff3a17bc9b4b93108d29cae81897b0
         with:
           # Automatically inject basePath in your Next.js configuration file and disable
           # server side image optimization (https://nextjs.org/docs/api-reference/next/image#unoptimized).
@@ -58,7 +68,8 @@ jobs:
           # You may remove this line if you want to manage the configuration yourself.
           static_site_generator: next
       - name: Restore cache
-        uses: actions/cache@v4
+        # SENTINEL: Pin to 0c45773b623bec8c7b749f97adadef336155af6a (actions/cache@v4)
+        uses: actions/cache@0c45773b623bec8c7b749f97adadef336155af6a
         with:
           path: |
             .next/cache
@@ -72,21 +83,27 @@ jobs:
       - name: Build with Next.js
         run: ${{ steps.detect-package-manager.outputs.runner }} next build
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        # SENTINEL: Pin to a753861a5debcf57bf8b404356158c8e1e33150c (actions/upload-pages-artifact@v3)
+        uses: actions/upload-pages-artifact@a753861a5debcf57bf8b404356158c8e1e33150c
         with:
           path: ./out
 
   # Deployment job
   deploy:
+    # SENTINEL: Only deploy on main branch if build succeeded and package exists
+    if: github.ref == 'refs/heads/main' && needs.build.result == 'success' && needs.build.outputs.has_package == 'true'
     permissions:
       pages: write
       id-token: write
+      contents: read
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: build
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        # SENTINEL: Pin to 9dbe3824824f8a1377b8e298bafde1a50ede43e5 (actions/deploy-pages@v4)
+        uses: actions/deploy-pages@9dbe3824824f8a1377b8e298bafde1a50ede43e5
