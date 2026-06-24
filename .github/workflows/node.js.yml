@@ -9,10 +9,16 @@ on:
   pull_request:
     branches: [ "main" ]
 
+# SENTINEL: Enforce global least-privilege permissions
+permissions:
+  contents: read
+
 jobs:
   build:
-
+    # SENTINEL: Prevent failures in uninitialized repository state
+    if: hashFiles('package.json') != ''
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     strategy:
       matrix:
@@ -20,12 +26,15 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-    - uses: actions/checkout@v4
+    # SENTINEL: Pin to df4cb1c069e1874edd31b4311f1884172cec0e10 (actions/checkout@v4)
+    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
     - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
+      # SENTINEL: Pin to 48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e (actions/setup-node@v4)
+      uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
+        # SENTINEL: Conditional cache to prevent errors when lockfile is missing
+        cache: ${{ hashFiles('package-lock.json') != '' && 'npm' || '' }}
     - run: npm ci
     - run: npm run build --if-present
     - run: npm test
