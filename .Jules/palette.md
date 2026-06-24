@@ -1,0 +1,3 @@
+## 2026-06-24 - [Bilingual Accessibility Foundation in Sparse Repositories]
+**Learning:** In sparse or uninitialized repositories (where `package.json` and application code are missing), the primary UX impact shifts to the project's entry points and contributor workflows. Establishing bilingual support (English/Bengali) and semantic accessibility tags in `README.md` and `PULL_REQUEST_TEMPLATE.md` provides an immediate, inclusive foundation for future development.
+**Action:** Prioritize documentation accessibility and bilingual templates when the application UI is not yet present. Use `<span lang="bn">` for Bengali text to ensure screen reader compatibility.
