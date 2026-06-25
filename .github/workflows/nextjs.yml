@@ -76,10 +76,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}-
       - name: Install dependencies
+        if: steps.detect-package-manager.outputs.manager != ''
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
       - name: Build with Next.js
+        if: steps.detect-package-manager.outputs.manager != ''
         run: ${{ steps.detect-package-manager.outputs.runner }} next build
       - name: Upload artifact
+        if: steps.detect-package-manager.outputs.manager != ''
         uses: actions/upload-pages-artifact@a753861a5debcf57bf8b404356158c8e1e33150c # actions/upload-pages-artifact@v3
         with:
           path: ./out
