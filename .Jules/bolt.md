@@ -1,3 +1,3 @@
-## 2026-06-25 - [CI Efficiency]
-**Learning:** CI workflows in sparse or uninitialized repositories can be significantly optimized by ignoring documentation changes, terminating outdated runs, and skipping non-essential installation checks (audit/fund).
-**Action:** Always implement `paths-ignore` for `README.md` and `.Jules/**`, enable `cancel-in-progress` for non-deployment workflows, and use `--no-audit --no-fund` flags with `npm ci` to reduce CI overhead.
+## 2026-06-25 - [CI Efficiency & Resilience]
+**Learning:** CI optimizations (like `cache: 'npm'`) can cause failures in uninitialized repositories if they expect manifest files (e.g., `package-lock.json`) to exist. Performance wins must be guarded by resilience logic.
+**Action:** Always implement conditional logic (e.g., `if: hashFiles('package.json') != ''`) when adding performance-oriented CI steps to ensure they don't break the build in early-stage repositories.
