@@ -38,7 +38,8 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
+        # BOLT: Only enable caching if a lock file exists to prevent failure in uninitialized repositories
+        cache: ${{ hashFiles('package-lock.json') != '' && 'npm' || '' }}
     # BOLT: Use --no-audit and --no-fund to speed up clean installations in CI
     - run: npm ci --no-audit --no-fund
     - run: npm run build --if-present
