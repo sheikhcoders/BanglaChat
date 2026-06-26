@@ -1,0 +1,3 @@
+## 2026-06-26 - Handling CI Resilience in Sparse Repositories
+**Learning:** In uninitialized or sparse repositories, GitHub Actions triggers (like `cache: npm` or `npm ci`) will fail if expected manifests (`package-lock.json`) are missing. Simply skipping these steps with `if: hashFiles(...)` can lead to "silent passes" where critical build steps are omitted without notice.
+**Action:** Use conditional logic in CI scripts to issue a `::warning::` when manifests are missing while allowing the job to succeed. This satisfies the need for "loud feedback" while maintaining CI stability for infrastructure-only changes in early-stage projects.
