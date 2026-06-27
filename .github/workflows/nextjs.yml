@@ -8,6 +8,10 @@ on:
   # Runs on pushes targeting the default branch
   push:
     branches: ["main"]
+    # BOLT: Skip deployment runs for documentation-only changes to save compute resources
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -68,7 +72,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}-
       - name: Install dependencies
-        run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
+        # BOLT: --no-audit and --no-fund flags reduce installation time by skipping unnecessary checks
+        run: |
+          if [ "${{ steps.detect-package-manager.outputs.manager }}" == "npm" ]; then
+            npm ci --no-audit --no-fund
+          else
+            ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
+          fi
       - name: Build with Next.js
         run: ${{ steps.detect-package-manager.outputs.runner }} next build
       - name: Upload artifact
