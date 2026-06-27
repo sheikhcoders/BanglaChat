@@ -1,0 +1,3 @@
+## 2026-06-27 - CI Efficiency and Resilience in Uninitialized Repositories
+**Learning:** In repositories lacking a `package-lock.json`, the `actions/setup-node` cache feature and `npm ci` can cause workflow failures (EUSAGE). Additionally, documentation-only commits trigger unnecessary CI runs, wasting compute resources. Even `npm run build --if-present` fails with ENOENT if `package.json` is missing.
+**Action:** Always implement conditional caching `cache: ${{ hashFiles('package-lock.json') != '' && 'npm' || '' }}` and `paths-ignore` for documentation. Guard `npm ci`, `npm test`, AND `npm run build` steps with `if` conditions checking for manifest existence to ensure CI resilience in early-stage projects.

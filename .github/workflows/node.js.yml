@@ -6,8 +6,21 @@ name: Node.js CI
 on:
   push:
     branches: [ "main" ]
+    # BOLT: Skip CI for documentation-only changes to save compute resources
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
   pull_request:
     branches: [ "main" ]
+    # BOLT: Skip CI for documentation-only changes to save compute resources
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
+
+# BOLT: Cancel in-progress runs for the same branch to save resources on rapid commits
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -25,7 +38,17 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+        # BOLT: Only attempt to cache if package-lock.json exists to prevent errors in uninitialized repos
+        cache: ${{ hashFiles('package-lock.json') != '' && 'npm' || '' }}
+    # BOLT: Guard npm ci with hashFiles to prevent EUSAGE errors in uninitialized repositories
+    - name: Install dependencies
+      if: hashFiles('package-lock.json') != ''
+      run: npm ci --no-audit --no-fund
+    # BOLT: Guard npm run build with hashFiles to prevent ENOENT errors in uninitialized repositories
+    - name: Build
+      if: hashFiles('package.json') != ''
+      run: npm run build --if-present
+    # BOLT: Guard npm test with hashFiles to prevent failures in uninitialized repositories
+    - name: Run tests
+      if: hashFiles('package.json') != ''
+      run: npm test
