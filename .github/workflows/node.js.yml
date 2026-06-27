@@ -44,7 +44,9 @@ jobs:
     - name: Install dependencies
       if: hashFiles('package-lock.json') != ''
       run: npm ci --no-audit --no-fund
+    # BOLT: Guard npm run build with hashFiles to prevent ENOENT errors in uninitialized repositories
     - name: Build
+      if: hashFiles('package.json') != ''
       run: npm run build --if-present
     # BOLT: Guard npm test with hashFiles to prevent failures in uninitialized repositories
     - name: Run tests
