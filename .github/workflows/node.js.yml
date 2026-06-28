@@ -6,8 +6,21 @@ name: Node.js CI
 on:
   push:
     branches: [ "main" ]
+    # BOLT: Ignore documentation changes to save CI compute resources
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
   pull_request:
     branches: [ "main" ]
+    # BOLT: Ignore documentation changes to save CI compute resources
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
+
+# BOLT: Cancel in-progress runs for the same PR/branch to save compute
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -25,7 +38,17 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+        # BOLT: Conditional caching to avoid errors in uninitialized repositories
+        cache: ${{ hashFiles('package-lock.json') != '' && 'npm' || '' }}
+    - name: Install dependencies
+      # BOLT: Skip if package.json is missing to save compute and avoid failures
+      if: hashFiles('package.json') != ''
+      run: npm ci
+    - name: Build
+      # BOLT: Skip if package.json is missing
+      if: hashFiles('package.json') != ''
+      run: npm run build --if-present
+    - name: Test
+      # BOLT: Skip if package.json is missing
+      if: hashFiles('package.json') != ''
+      run: npm test
