@@ -9,10 +9,16 @@ on:
   pull_request:
     branches: [ "main" ]
 
+# SENTINEL: Added global permissions to enforce least privilege.
+permissions:
+  contents: read
+
 jobs:
   build:
 
     runs-on: ubuntu-latest
+    # SENTINEL: Added timeout to prevent hanging jobs.
+    timeout-minutes: 15
 
     strategy:
       matrix:
@@ -20,12 +26,21 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-    - uses: actions/checkout@v4
+    # SENTINEL: Pinned to actions/checkout@v4.1.7
+    - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
     - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
+      # SENTINEL: Pinned to actions/setup-node@v4.0.3
+      uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+        # SENTINEL: Conditional caching to handle uninitialized repositories without a lockfile.
+        cache: ${{ hashFiles('package-lock.json') != '' && 'npm' || '' }}
+    - name: Install dependencies
+      if: hashFiles('package.json') != ''
+      run: npm ci
+    - name: Build
+      if: hashFiles('package.json') != ''
+      run: npm run build --if-present
+    - name: Test
+      if: hashFiles('package.json') != ''
+      run: npm test
