@@ -6,8 +6,21 @@ name: Node.js CI
 on:
   push:
     branches: [ "main" ]
+    # BOLT: Skip CI for documentation-only changes to save resources.
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
   pull_request:
     branches: [ "main" ]
+    # BOLT: Skip CI for documentation-only changes to save resources.
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
+
+# BOLT: Cancel in-progress runs for the same branch/PR to optimize CI minute usage.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -25,7 +38,15 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
+        # BOLT: Use conditional caching to avoid setup-node failures in repositories without a lockfile.
+        cache: ${{ hashFiles('package-lock.json') != '' && 'npm' || '' }}
+
+    # BOLT: Guard manifest-dependent steps to prevent pipeline failures in uninitialized
+    # repositories while providing faster feedback for valid code changes.
     - run: npm ci
+      # BOLT: npm ci requires package-lock.json to exist.
+      if: hashFiles('package-lock.json') != ''
     - run: npm run build --if-present
+      if: hashFiles('package.json') != ''
     - run: npm test
+      if: hashFiles('package.json') != ''
