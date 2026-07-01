@@ -32,7 +32,12 @@ jobs:
       uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
+        # SENTINEL: Conditional caching prevents failure in uninitialized repository
+        cache: ${{ hashFiles('package-lock.json') != '' && 'npm' || '' }}
+    # SENTINEL: Guard steps with manifest check to handle uninitialized state
     - run: npm ci
+      if: hashFiles('package-lock.json') != ''
     - run: npm run build --if-present
+      if: hashFiles('package.json') != ''
     - run: npm test
+      if: hashFiles('package.json') != ''
