@@ -1,0 +1,4 @@
+## 2026-07-03 - CI Hardening for Uninitialized Repositories
+**Vulnerability:** Workflow supply-chain risks and resource exhaustion.
+**Learning:** In uninitialized repositories (no `package.json`), GitHub Actions starter workflows are often the only code present. These workflows typically use mutable version tags (e.g., `@v4`), lack explicit permissions, and don't define timeouts, making them susceptible to tag-moving attacks and potentially leading to infinite runs or excessive privilege.
+**Prevention:** Harden CI infrastructure immediately by pinning all actions to immutable commit SHAs, enforcing global `permissions: contents: read` (principle of least privilege), adding `timeout-minutes` to all jobs, and implementing guards (e.g., `if: hashFiles('package.json') != ''`) to prevent CI failures before the project is ready.
