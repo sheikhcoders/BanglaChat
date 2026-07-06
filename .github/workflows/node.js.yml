@@ -6,12 +6,24 @@ name: Node.js CI
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
   pull_request:
     branches: [ "main" ]
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
+
+# Optimization: Cancel in-progress runs for the same branch to save runner minutes
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
-
+    # Optimization: Skip job if package.json is missing (uninitialized state)
+    if: hashFiles('package.json') != ''
     runs-on: ubuntu-latest
 
     strategy:
@@ -25,7 +37,8 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
+        # Optimization: Only attempt caching if a lockfile exists
+        cache: ${{ hashFiles('package-lock.json') != '' && 'npm' || '' }}
     - run: npm ci
     - run: npm run build --if-present
     - run: npm test

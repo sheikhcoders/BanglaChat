@@ -8,6 +8,9 @@ on:
   # Runs on pushes targeting the default branch
   push:
     branches: ["main"]
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -21,6 +24,8 @@ concurrency:
 jobs:
   # Build job
   build:
+    # Optimization: Skip job if package.json is missing (uninitialized state)
+    if: hashFiles('package.json') != ''
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -78,6 +83,8 @@ jobs:
 
   # Deployment job
   deploy:
+    # Optimization: Also skip deployment if package.json is missing
+    if: hashFiles('package.json') != ''
     permissions:
       pages: write
       id-token: write
