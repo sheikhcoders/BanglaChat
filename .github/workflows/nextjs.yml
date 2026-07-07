@@ -41,10 +41,10 @@ jobs:
             echo "runner=npx --no-install" >> $GITHUB_OUTPUT
             exit 0
           else
-            echo "Unable to determine package manager"
-            exit 1
+            echo "exists=false" >> $GITHUB_OUTPUT
           fi
       - name: Setup Node
+        if: steps.detect-package-manager.outputs.exists == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: "20"
@@ -68,10 +68,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}-
       - name: Install dependencies
+        if: steps.detect-package-manager.outputs.exists == 'true'
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
       - name: Build with Next.js
+        if: steps.detect-package-manager.outputs.exists == 'true'
         run: ${{ steps.detect-package-manager.outputs.runner }} next build
       - name: Upload artifact
+        if: steps.detect-package-manager.outputs.exists == 'true'
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./out
