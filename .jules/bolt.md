@@ -1,0 +1,3 @@
+## 2026-07-07 - CI Optimization for Uninitialized Repositories
+**Learning:** CI workflows (like `node.js.yml` and `nextjs.yml`) that rely on `package.json` or other manifests will fail immediately in an uninitialized repository, wasting runner minutes and polluting the Actions history with avoidable failures. Additionally, changes to documentation or agent journals shouldn't trigger expensive CI builds.
+**Action:** Implement `paths-ignore` for `README.md` and `.jules/**`, add `concurrency` with `cancel-in-progress: true` to prevent redundant runs, and use job-level `if: hashFiles('package.json') != ''` guards to skip CI until the project is properly initialized.
