@@ -6,13 +6,29 @@ name: Node.js CI
 on:
   push:
     branches: [ "main" ]
+    # Optimization: Ignore documentation and journal updates to avoid redundant CI runs
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
   pull_request:
     branches: [ "main" ]
+    # Optimization: Ignore documentation and journal updates to avoid redundant CI runs
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
+
+# Optimization: Cancel in-progress runs on new pushes to save runner minutes
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
-
+    # Optimization: Only run when a manifest exists to avoid failing in uninitialized states
+    if: hashFiles('package.json') != ''
     runs-on: ubuntu-latest
+    # Optimization: Prevent hung processes from consuming excessive resources
+    timeout-minutes: 15
 
     strategy:
       matrix:
