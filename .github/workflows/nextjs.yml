@@ -21,6 +21,7 @@ concurrency:
 jobs:
   # Build job
   build:
+    if: hashFiles('package.json') != ''
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -78,6 +79,7 @@ jobs:
 
   # Deployment job
   deploy:
+    if: hashFiles('package.json') != ''
     permissions:
       pages: write
       id-token: write
