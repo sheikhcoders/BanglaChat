@@ -1,5 +1,3 @@
 # BanglaChat / <span lang="bn">বাংলাচ্যাট</span>
-
-A bilingual communication platform designed for English and Bengali speakers.
-
-<span lang="bn">ইংরেজি এবং বাংলাভাষীদের জন্য ডিজাইন করা একটি দ্বভাষিক যোগাযোগ মাধ্যম।</span>
+A bilingual platform for English and Bengali.
+<span lang="bn">ইংরেজি এবং বাংলার জন্য একটি দ্বভাষিক মাধ্যম।</span>
