@@ -25,6 +25,7 @@ concurrency:
 jobs:
   # Build job
   build:
+    if: hashFiles('package.json') != ''
     runs-on: ubuntu-latest
     permissions:
       contents: read
