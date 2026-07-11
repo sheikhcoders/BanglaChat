@@ -24,6 +24,7 @@ concurrency:
 jobs:
   # Build job
   build:
+    if: hashFiles('package.json') != ''
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -82,6 +83,7 @@ jobs:
 
   # Deployment job
   deploy:
+    if: hashFiles('package.json') != ''
     permissions:
       contents: read
       pages: write
