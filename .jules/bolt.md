@@ -1,0 +1,3 @@
+## 2026-07-12 - CI Efficiency in Uninitialized Repositories
+**Learning:** In an uninitialized repository (missing `package.json`), standard CI workflows for Node.js and Next.js will fail immediately upon attempting to install dependencies. This wastes runner minutes and clutters the Actions history. Implementing `paths-ignore` for documentation and `if: hashFiles('package.json') != ''` guards at the job level prevents these unnecessary failures. Additionally, pinning actions to immutable SHAs is a critical security best practice that should be established early.
+**Action:** Always implement manifest existence guards and path filters when working with uninitialized or documentation-heavy repositories to optimize CI efficiency.
