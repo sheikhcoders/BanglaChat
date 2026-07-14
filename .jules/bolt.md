@@ -1,0 +1,3 @@
+## 2026-07-13 - [Optimize CI Efficiency]
+**Learning:** Implementing `paths-ignore` and job-level manifest guards (`if: hashFiles('package.json') != ''`) is the primary performance optimization for uninitialized repositories to prevent wasting runner minutes. However, care must be taken with concurrency settings in deployment workflows to respect project-specific requirements (e.g., ensuring production deployments complete).
+**Action:** Always include these guards when configuring CI for a new or uninitialized project. In deployment workflows, carefully review concurrency comments before enabling `cancel-in-progress`.
