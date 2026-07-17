@@ -1,0 +1,3 @@
+## 2026-07-17 - Developer Onboarding as Micro-UX in Uninitialized Repositories
+**Learning:** In repositories lacking functional application code or active UI elements, contribution templates and documentation serve as the primary Micro-UX surface. For bilingual projects like BanglaChat, utilizing exact localizations such as "পুলের রিকোয়েস্ট" (Pul Request) rather than direct transliterations or literal translations establishes immediate linguistic trust and clear developer guidelines.
+**Action:** Always structure initial documentation and Pull Request templates with accessible, high-quality bilingual (English and Bengali) instructions, and implement workflows that cleanly bypass CI checks for documentation-only changes to keep execution times zero.
