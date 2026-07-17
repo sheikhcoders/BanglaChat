@@ -1,0 +1,4 @@
+## 2026-07-16 - GitHub Actions Workflow Hardening and Supply Chain Security
+**Vulnerability:** Overly permissive default GITHUB_TOKEN permissions, lack of job timeouts, and untrusted action references in CI/CD workflows, which expose the repository to potential runner compromise and supply chain injection attacks.
+**Learning:** Default permissions in GitHub Actions can grant write access to resources, and referencing third-party actions by tag (like `@v4`) is susceptible to tag-hijacking. Moreover, in uninitialized repositories, missing package manifests cause early-stage pipeline crashes unless step-level file existence checks guard the execution context.
+**Prevention:** Enforce strict job-level `permissions: contents: read`, set a strict `timeout-minutes: 15` threshold for defense-in-depth, reference all third-party actions using immutable full 40-character commit SHAs, and execute step-level manifest checks directly after the repository checkout step.
