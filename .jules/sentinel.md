@@ -1,0 +1,4 @@
+## 2026-07-17 - GitHub Actions Hardening for Uninitialized Repository State
+**Vulnerability:** Supply chain risks (unpinned Action versions) and unauthenticated execution loops in uninitialized repositories resulting in CI dependency errors and resource waste.
+**Learning:** Third-party GitHub Actions should always be pinned to full immutable SHA hashes rather than mutable tags to prevent dependency tampering. Furthermore, workflow steps must gracefully check for the existence of core package manifests (such as `package.json`) before attempting setup or package manager commands, preventing unnecessary run failure in boilerplate or empty project states.
+**Prevention:** Pin all GitHub Actions to exact immutable 40-character SHAs, define job-level timeouts, implement restrictive default permissions (`permissions: contents: read`), and configure step-level existence checks for configuration files right after repository checkout.
