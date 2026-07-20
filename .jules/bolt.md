@@ -1,0 +1,3 @@
+## 2026-07-20 - CI Optimization in Uninitialized Repository
+**Learning:** In uninitialized repositories lacking functional application code, standard CI workflows fail with 'Dependencies lock file is not found' errors, wasting valuable GitHub Action runner minutes. Because job-level guards like `hashFiles` are evaluated before the checkout step, they cannot safely detect missing manifests. Step-level package.json existence checks implemented immediately after checkout are required to gracefully skip all subsequent steps and optimize runner usage.
+**Action:** Always implement a step-level check for package.json existence right after the checkout step, and guard subsequent tasks with conditional steps in uninitialized environments.
