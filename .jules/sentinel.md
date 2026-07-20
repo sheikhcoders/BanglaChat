@@ -1,0 +1,4 @@
+## 2026-07-18 - CI/CD Workflow Hardening & Supply Chain Security
+**Vulnerability:** Default permissive workflow permissions, vulnerable mutable action tags, missing job timeouts, and failing dependencies checks in uninitialized repository states.
+**Learning:** GitHub Actions workflows default to permissive states. Third-party actions using mutable tags (e.g., `@v4`) are prone to supply chain attacks, and workflows lacking strict timeouts can consume excessive runner billing minutes. In uninitialized repositories, build pipelines fail predictably because setup/build steps lack package.json existence guards.
+**Prevention:** Enforce strict 'permissions: contents: read' globally, pin all third-party actions to immutable 40-character commit SHAs, set a job-level 'timeout-minutes: 15' limit, and implement step-level checks right after repository checkout to safely bypass package setup and execution tasks.
