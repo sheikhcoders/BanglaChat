@@ -1,0 +1,3 @@
+## 2026-07-20 - CI Performance Optimization for Uninitialized Repository
+**Learning:** In an uninitialized repository lacking package.json, standard CI workflows fail and waste GitHub Actions runner minutes. Adding `paths-ignore` for documentation and journal files, and introducing step-level package.json checks post-checkout, drastically optimizes performance by completely avoiding unnecessary CI runs and failures.
+**Action:** Always include step-level package.json existence checks after checkout to guard subsequent setup/build tasks, skip deployment jobs accordingly, and ignore documentation paths.

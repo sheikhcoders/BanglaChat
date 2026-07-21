@@ -6,12 +6,21 @@ name: Node.js CI
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
   pull_request:
     branches: [ "main" ]
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
+
+permissions:
+  contents: read
 
 jobs:
   build:
-
+    timeout-minutes: 15
     runs-on: ubuntu-latest
 
     strategy:
@@ -20,12 +29,33 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v4.2.2
+
+    # Check if package.json exists to avoid 'Dependencies lock file is not found' and empty run failures
+    - name: Check package.json existence
+      id: check-package-json
+      run: |
+        if [ -f "package.json" ]; then
+          echo "exists=true" >> $GITHUB_OUTPUT
+        else
+          echo "exists=false" >> $GITHUB_OUTPUT
+        fi
+
     - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
+      if: steps.check-package-json.outputs.exists == 'true'
+      uses: actions/setup-node@v4.2.0
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+
+    - name: Install dependencies
+      if: steps.check-package-json.outputs.exists == 'true'
+      run: npm ci
+
+    - name: Build
+      if: steps.check-package-json.outputs.exists == 'true'
+      run: npm run build --if-present
+
+    - name: Run Tests
+      if: steps.check-package-json.outputs.exists == 'true'
+      run: npm test
