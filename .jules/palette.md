@@ -1,0 +1,3 @@
+## 2026-07-20 - Accessible Bilingual Developer Onboarding in Uninitialized Repositories
+**Learning:** When a repository is in an uninitialized state without an application UI, the documentation (README.md) and contribution templates (PULL_REQUEST_TEMPLATE.md) serve as the primary micro-UX developer onboarding surfaces. Prioritizing accessible bilingual language (English/Bengali) and correct cultural terminology sets an inclusive and pleasant developer tone from day one.
+**Action:** Always create clean, lightweight bilingual documentation under 50 lines and use correct transliterations such as 'পুলের রিকোয়েস্ট' for Pull Request, avoiding forbidden terms like 'পুলি'.
