@@ -1,0 +1,3 @@
+## 2026-07-20 - Accessible Developer Onboarding in Uninitialized States
+**Learning:** In uninitialized repositories lacking functional UI, documentation and template artifacts (e.g., README.md, Pull Request templates) serve as the primary Micro-UX surface for onboarding. Prioritizing accessible bilingual branding and clean accessibility-oriented checklists establishes a standard of inclusion from the outset.
+**Action:** Always provide clear, bilingual titles and instructions utilizing precise local terms (such as "পুলের রিকোয়েস্ট" for PRs), while embedding structured a11y checklists to enforce accessible coding standards from day one.
