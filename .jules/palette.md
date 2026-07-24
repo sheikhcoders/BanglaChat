@@ -1,0 +1,3 @@
+## 2026-07-23 - Inclusive Onboarding in Uninitialized States
+**Learning:** In uninitialized repositories lacking functional application code, documentation and contribution templates serve as the primary micro-UX surfaces; prioritizing bilingual English/Bengali accessibility in these early artifacts establishes an inclusive, welcoming tone for the project's lifecycle.
+**Action:** Always verify that documentation title and description are bilingual using 'BanglaChat / <span lang="bn">বাংলাচ্যাট</span>' and translation/accessibility checklists are included in contribution templates (using 'পুলের রিকোয়েস্ট' for PRs).
