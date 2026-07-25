@@ -1,0 +1,3 @@
+## 2026-07-25 - Bilingual Onboarding in Uninitialized States
+**Learning:** In uninitialized repositories lacking functional application code, documentation and contribution templates serve as the primary micro-UX surfaces; prioritizing accessibility and bilingual developer onboarding establishes an inclusive tone for the project's lifecycle.
+**Action:** When working in a bare repository or uninitialized state, focus on establishing clear bilingual entry points (e.g., English and Bengali) in key documentation artifacts (README.md, PR templates) while ensuring correctness of terminology like "পুলের রিকুয়েস্ট" (avoiding incorrect variants like "পুলি") and keeping files concise and accessible.
