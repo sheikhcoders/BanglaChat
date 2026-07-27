@@ -1,0 +1,4 @@
+## 2026-07-27 - [Hardening GHA Workflows and Handling Uninitialized Repo States]
+**Vulnerability:** GHA third-party action pinning to mutable tags, lack of restrictive permissions/timeouts, and the risk of uninitialized package.json/lockfile checking breaking GHA CI pipelines.
+**Learning:** Pinning actions to mutable tags/branches allows potential malicious upstream changes to run automatically. Lack of global permissions leaves workflows with elevated repository privileges. Additionally, in uninitialized/bare repositories, checking for package.json or locking files with a naive job-level filter can break workflows entirely before checkout occurs.
+**Prevention:** Pin all third-party actions to 40-character immutable SHA-1 hashes, restrict global permission blocks to read-only, configure job-level timeouts to prevent run-away billing/resource use, and implement post-checkout step-level existence checks to gracefully handle uninitialized repos.
