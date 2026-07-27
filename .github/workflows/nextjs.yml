@@ -8,6 +8,11 @@ on:
   # Runs on pushes targeting the default branch
   push:
     branches: ["main"]
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
+      - 'journals/**'
+      - 'SECURITY.md'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -18,16 +23,35 @@ concurrency:
   group: "pages"
   cancel-in-progress: false
 
+permissions:
+  contents: read
+
 jobs:
   # Build job
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
+    outputs:
+      package_exists: ${{ steps.check_files.outputs.exists }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@eef6142db2c5b31f7863f4c78cd09513d2857d6b # v4.2.1
+        with:
+          persist-credentials: false
+
+      - name: Check package.json existence
+        id: check_files
+        run: |
+          if [ -f "package.json" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Detect package manager
+        if: steps.check_files.outputs.exists == 'true'
         id: detect-package-manager
         run: |
           if [ -f "${{ github.workspace }}/yarn.lock" ]; then
@@ -44,21 +68,27 @@ jobs:
             echo "Unable to determine package manager"
             exit 1
           fi
+
       - name: Setup Node
-        uses: actions/setup-node@v4
+        if: steps.check_files.outputs.exists == 'true'
+        uses: actions/setup-node@0a44ba784172517478202972403d2d0001a096d5 # v4.0.4
         with:
           node-version: "20"
           cache: ${{ steps.detect-package-manager.outputs.manager }}
+
       - name: Setup Pages
-        uses: actions/configure-pages@v5
+        if: steps.check_files.outputs.exists == 'true'
+        uses: actions/configure-pages@983d63b72ee22c4d724c3c6f3630f3a251ab69cb # v5.0.0
         with:
           # Automatically inject basePath in your Next.js configuration file and disable
           # server side image optimization (https://nextjs.org/docs/api-reference/next/image#unoptimized).
           #
           # You may remove this line if you want to manage the configuration yourself.
           static_site_generator: next
+
       - name: Restore cache
-        uses: actions/cache@v4
+        if: steps.check_files.outputs.exists == 'true'
+        uses: actions/cache@3624e0307b11a4e2802aecdbafaba1815db4fcde # v4.1.1
         with:
           path: |
             .next/cache
@@ -67,26 +97,35 @@ jobs:
           # If source files changed but packages didn't, rebuild from a prior cache.
           restore-keys: |
             ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}-
+
       - name: Install dependencies
+        if: steps.check_files.outputs.exists == 'true'
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
+
       - name: Build with Next.js
+        if: steps.check_files.outputs.exists == 'true'
         run: ${{ steps.detect-package-manager.outputs.runner }} next build
+
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        if: steps.check_files.outputs.exists == 'true'
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dee4c66298db # v3.0.1
         with:
           path: ./out
 
   # Deployment job
   deploy:
     permissions:
+      contents: read
       pages: write
       id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: build
+    if: needs.build.outputs.package_exists == 'true'
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@d6db596a189d134d283416e4024f0c727a2319ef # v4.0.5

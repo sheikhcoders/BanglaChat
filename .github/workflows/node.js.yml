@@ -6,26 +6,67 @@ name: Node.js CI
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
+      - 'journals/**'
+      - 'SECURITY.md'
   pull_request:
     branches: [ "main" ]
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
+      - 'journals/**'
+      - 'SECURITY.md'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
 
     strategy:
       matrix:
         node-version: [18.x, 20.x, 22.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout
+      uses: actions/checkout@eef6142db2c5b31f7863f4c78cd09513d2857d6b # v4.2.1
+      with:
+        persist-credentials: false
+
+    - name: Check package.json existence
+      id: check_files
+      run: |
+        if [ -f "package.json" ]; then
+          echo "exists=true" >> $GITHUB_OUTPUT
+        else
+          echo "exists=false" >> $GITHUB_OUTPUT
+        fi
+
     - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
+      if: steps.check_files.outputs.exists == 'true'
+      uses: actions/setup-node@0a44ba784172517478202972403d2d0001a096d5 # v4.0.4
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+
+    - name: Install dependencies
+      if: steps.check_files.outputs.exists == 'true'
+      run: npm ci
+
+    - name: Build
+      if: steps.check_files.outputs.exists == 'true'
+      run: npm run build --if-present
+
+    - name: Test
+      if: steps.check_files.outputs.exists == 'true'
+      run: npm test
