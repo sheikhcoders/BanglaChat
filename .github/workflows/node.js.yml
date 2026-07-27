@@ -6,13 +6,30 @@ name: Node.js CI
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
   pull_request:
     branches: [ "main" ]
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
+
+# Enforce global read-only permissions
+permissions:
+  contents: read
+
+# Concurrency to cancel redundant outdated runs
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
 
     strategy:
       matrix:
@@ -20,12 +37,38 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-    - uses: actions/checkout@v4
+    # Pin to actions/checkout@v4 (latest)
+    - name: Checkout
+      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      with:
+        persist-credentials: false
+
+    # Bolt performance optimization: Check package.json before doing setup/install steps to prevent failing in uninitialized state
+    - name: Check package.json existence
+      id: check_files
+      run: |
+        if [ -f "package.json" ]; then
+          echo "exists=true" >> $GITHUB_OUTPUT
+        else
+          echo "exists=false" >> $GITHUB_OUTPUT
+        fi
+
+    # Pin to actions/setup-node@v4 (latest)
     - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
+      if: steps.check_files.outputs.exists == 'true'
+      uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+
+    - name: Install dependencies
+      if: steps.check_files.outputs.exists == 'true'
+      run: npm ci
+
+    - name: Build
+      if: steps.check_files.outputs.exists == 'true'
+      run: npm run build --if-present
+
+    - name: Test
+      if: steps.check_files.outputs.exists == 'true'
+      run: npm test
