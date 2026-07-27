@@ -36,7 +36,7 @@ jobs:
       exists: ${{ steps.check_files.outputs.exists }}
     steps:
       - name: Checkout
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@eef6142db2c5b31f7863f4c78cd09513d2857d6b # v4.2.1
         with:
           persist-credentials: false
 
@@ -70,18 +70,18 @@ jobs:
 
       - name: Setup Node
         if: steps.check_files.outputs.exists == 'true'
-        uses: actions/setup-node@1e60f620b9541d16bece96c5465fc8ee64731479 # v4.0.3
+        uses: actions/setup-node@0a44ba784172517478202972403d2d0001a096d5 # v4.0.4
         with:
           node-version: "20"
           cache: ${{ steps.detect-package-manager.outputs.manager }}
 
       - name: Setup Pages
         if: steps.check_files.outputs.exists == 'true'
-        uses: actions/configure-pages@983d63d72ee574c16430268a08f50f78397bc935 # v5.0.0
+        uses: actions/configure-pages@983d63d72ee22c4d724c3c6f3630f3a251ab69cb # v5.0.0
 
       - name: Restore cache
         if: steps.check_files.outputs.exists == 'true'
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        uses: actions/cache@3624e0307b11a4e2802aecdbafaba1815db4fcde # v4.1.1
         with:
           path: |
             .next/cache
@@ -119,4 +119,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5
+        uses: actions/deploy-pages@d6db596a189d134d283416e4024f0c727a2319ef # v4.0.5

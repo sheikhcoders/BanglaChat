@@ -33,7 +33,7 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      uses: actions/checkout@eef6142db2c5b31f7863f4c78cd09513d2857d6b # v4.2.1
       with:
         persist-credentials: false
 
@@ -48,7 +48,7 @@ jobs:
 
     - name: Use Node.js ${{ matrix.node-version }}
       if: steps.check_files.outputs.exists == 'true'
-      uses: actions/setup-node@1e60f620b9541d16bece96c5465fc8ee64731479 # v4.0.3
+      uses: actions/setup-node@0a44ba784172517478202972403d2d0001a096d5 # v4.0.4
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
