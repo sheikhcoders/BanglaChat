@@ -1,3 +1,3 @@
-## 2026-07-27 - Inclusive Developer Experience in Uninitialized States
-**Learning:** In uninitialized repositories lacking functional application code, the primary user interface is documentation and templates. Designing these with bilingual accessibility (English/Bengali) establishes an inclusive and supportive foundation for contributors.
-**Action:** Always provide a clear, bilingual developer onboarding (under 50 lines) and an accessible Pull Request template using proper Bengali transliterations like 'পুলের রিকুয়েস্ট' instead of incorrect variations.
+## 2026-07-28 - Inclusive Developer Experience & CI Hardening in Uninitialized States
+**Learning:** In uninitialized repositories lacking functional application code, the primary touchpoints for developer UX are the onboarding files, templates, and CI/CD pipelines. Ensuring that CI/CD configuration handles bootstrapping states natively (by bypassing setup/build steps when package.json is missing) prevents recurring setup failures and provides a smooth path for initial contributions.
+**Action:** Guard workflow steps with step-level post-checkout `package.json` existence checks, and use proper bilingual assets for developer onboarding.
