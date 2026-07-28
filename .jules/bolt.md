@@ -1,0 +1,3 @@
+## 2026-07-28 - GHA Workflow Optimization under Uninitialized Repository Conditions
+**Learning:** In uninitialized repositories (no `package.json`), GHA workflows with setup and install steps will predictably fail. Standard workflow guards using `hashFiles('package.json')` at job-level evaluate before repository checkout is performed, leading to false negatives. By using post-checkout step-level existence checks (e.g. `[ -f package.json ]`) and exporting this check as a job output to conditional downstream jobs, we can gracefully skip execution without throwing build errors.
+**Action:** Always implement a step-level check for `package.json` right after checkout, and use that check to conditionally run subsequent steps and jobs.
