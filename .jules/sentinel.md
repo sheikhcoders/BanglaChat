@@ -1,0 +1,4 @@
+## 2026-07-28 - Uninitialized Repository CI Failures & Action Supply Chain Hardening
+**Vulnerability:** GHA workflow execution crashes when repository states are uninitialized (e.g., missing package.json/lockfiles). Over-privileged tokens and dynamic action tags expose workflows to supply chain attacks.
+**Learning:** Default workflows expect repository manifests (like package.json) to exist immediately, leading to predictable build-setup crashes on uninitialized repos. Additionally, using mutable tags (v4, v5) can lead to untrusted code execution if tags are reassigned or accounts compromised.
+**Prevention:** Guard all steps after checkout with step-level checks verifying `package.json` existence. Enforce strict `permissions: contents: read` globally, set job-level 15-minute timeouts, use `persist-credentials: false` on checkouts, and pin all actions to immutable 40-character commit SHAs.
