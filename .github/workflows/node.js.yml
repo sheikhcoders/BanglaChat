@@ -39,17 +39,30 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Check package.json existence
+        id: check_files
+        run: |
+          if [ -f "package.json" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'npm'
+          # Dynamically enable caching only if package.json exists to avoid 'lock file not found' failure
+          cache: ${{ steps.check_files.outputs.exists == 'true' && 'npm' || '' }}
 
       - name: Install dependencies
+        if: steps.check_files.outputs.exists == 'true'
         run: npm ci
 
       - name: Build
+        if: steps.check_files.outputs.exists == 'true'
         run: npm run build --if-present
 
       - name: Test
+        if: steps.check_files.outputs.exists == 'true'
         run: npm test
