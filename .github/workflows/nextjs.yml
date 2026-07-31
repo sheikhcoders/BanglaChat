@@ -8,6 +8,10 @@ on:
   # Runs on pushes targeting the default branch
   push:
     branches: ["main"]
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
+      - '.github/PULL_REQUEST_TEMPLATE.md'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -24,10 +28,24 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    timeout-minutes: 15
+    outputs:
+      exists: ${{ steps.check-files.outputs.exists }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Check package.json existence
+        id: check-files
+        run: |
+          if [ -f "package.json" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Detect package manager
+        if: steps.check-files.outputs.exists == 'true'
         id: detect-package-manager
         run: |
           if [ -f "${{ github.workspace }}/yarn.lock" ]; then
@@ -44,12 +62,16 @@ jobs:
             echo "Unable to determine package manager"
             exit 1
           fi
+
       - name: Setup Node
+        if: steps.check-files.outputs.exists == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: ${{ steps.detect-package-manager.outputs.manager }}
+
       - name: Setup Pages
+        if: steps.check-files.outputs.exists == 'true'
         uses: actions/configure-pages@v5
         with:
           # Automatically inject basePath in your Next.js configuration file and disable
@@ -57,7 +79,9 @@ jobs:
           #
           # You may remove this line if you want to manage the configuration yourself.
           static_site_generator: next
+
       - name: Restore cache
+        if: steps.check-files.outputs.exists == 'true'
         uses: actions/cache@v4
         with:
           path: |
@@ -67,11 +91,17 @@ jobs:
           # If source files changed but packages didn't, rebuild from a prior cache.
           restore-keys: |
             ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}-
+
       - name: Install dependencies
+        if: steps.check-files.outputs.exists == 'true'
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
+
       - name: Build with Next.js
+        if: steps.check-files.outputs.exists == 'true'
         run: ${{ steps.detect-package-manager.outputs.runner }} next build
+
       - name: Upload artifact
+        if: steps.check-files.outputs.exists == 'true'
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./out
@@ -86,6 +116,7 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: build
+    if: needs.build.outputs.exists == 'true'
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
