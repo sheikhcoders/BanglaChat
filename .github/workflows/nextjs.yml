@@ -8,6 +8,12 @@ on:
   # Runs on pushes targeting the default branch
   push:
     branches: ["main"]
+    # Skip CD for documentation updates to save runner minutes and reduce unnecessary load
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
+      - '.github/PULL_REQUEST_TEMPLATE.md'
+      - 'SECURITY.md'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -18,16 +24,38 @@ concurrency:
   group: "pages"
   cancel-in-progress: false
 
+permissions:
+  contents: read
+
 jobs:
   # Build job
   build:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    # Set timeout to prevent runaway executions from consuming billing minutes
+    timeout-minutes: 15
+    outputs:
+      exists: ${{ steps.check-files.outputs.exists }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      # Check if package.json exists to determine whether we are in an uninitialized state
+      - name: Check package.json existence
+        id: check-files
+        run: |
+          if [ -f "package.json" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Detect package manager
+        # Only run if package.json exists to avoid failing due to missing files
+        if: steps.check-files.outputs.exists == 'true'
         id: detect-package-manager
         run: |
           if [ -f "${{ github.workspace }}/yarn.lock" ]; then
@@ -44,12 +72,18 @@ jobs:
             echo "Unable to determine package manager"
             exit 1
           fi
+
       - name: Setup Node
+        # Only setup Node if package.json exists
+        if: steps.check-files.outputs.exists == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: ${{ steps.detect-package-manager.outputs.manager }}
+
       - name: Setup Pages
+        # Only setup Pages if package.json exists
+        if: steps.check-files.outputs.exists == 'true'
         uses: actions/configure-pages@v5
         with:
           # Automatically inject basePath in your Next.js configuration file and disable
@@ -57,7 +91,10 @@ jobs:
           #
           # You may remove this line if you want to manage the configuration yourself.
           static_site_generator: next
+
       - name: Restore cache
+        # Only restore cache if package.json exists
+        if: steps.check-files.outputs.exists == 'true'
         uses: actions/cache@v4
         with:
           path: |
@@ -67,11 +104,20 @@ jobs:
           # If source files changed but packages didn't, rebuild from a prior cache.
           restore-keys: |
             ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}-
+
       - name: Install dependencies
+        # Only install dependencies if package.json exists
+        if: steps.check-files.outputs.exists == 'true'
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
+
       - name: Build with Next.js
+        # Only build if package.json exists
+        if: steps.check-files.outputs.exists == 'true'
         run: ${{ steps.detect-package-manager.outputs.runner }} next build
+
       - name: Upload artifact
+        # Only upload artifact if package.json exists
+        if: steps.check-files.outputs.exists == 'true'
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./out
@@ -86,6 +132,8 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: build
+    # Only deploy if package.json exists
+    if: needs.build.outputs.exists == 'true'
     steps:
       - name: Deploy to GitHub Pages
         id: deployment

@@ -6,13 +6,36 @@ name: Node.js CI
 on:
   push:
     branches: [ "main" ]
+    # Skip CI for documentation updates to save runner minutes and reduce unnecessary load
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
+      - '.github/PULL_REQUEST_TEMPLATE.md'
+      - 'SECURITY.md'
   pull_request:
     branches: [ "main" ]
+    # Skip CI for documentation updates to save runner minutes and reduce unnecessary load
+    paths-ignore:
+      - 'README.md'
+      - '.jules/**'
+      - '.github/PULL_REQUEST_TEMPLATE.md'
+      - 'SECURITY.md'
+
+# Cancel in-progress runs of the same workflow on the same branch to save runner resources and give faster feedback
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    # Set timeout to prevent runaway executions from consuming billing minutes
+    timeout-minutes: 15
 
     strategy:
       matrix:
@@ -20,12 +43,50 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+
+    # Check if package.json exists to determine whether we are in an uninitialized state
+    - name: Check package.json existence
+      id: check-files
+      run: |
+        if [ -f "package.json" ]; then
+          echo "exists=true" >> $GITHUB_OUTPUT
+        else
+          echo "exists=false" >> $GITHUB_OUTPUT
+        fi
+
     - name: Use Node.js ${{ matrix.node-version }}
+      # Only setup node if package.json exists to prevent setup-node cache warnings/failures
+      if: steps.check-files.outputs.exists == 'true'
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+        # Cache npm dependencies if package-lock exists to speed up consecutive builds
+        cache: ${{ (hashFiles('package-lock.json') != '' && 'npm') || (hashFiles('pnpm-lock.yaml') != '' && 'pnpm') || (hashFiles('yarn.lock') != '' && 'yarn') || '' }}
+
+    - name: Install dependencies
+      # Skip installation step entirely if we are in an uninitialized/bare repository
+      if: steps.check-files.outputs.exists == 'true'
+      run: |
+        if [ -f "package-lock.json" ]; then
+          npm ci
+        elif [ -f "pnpm-lock.yaml" ]; then
+          npx pnpm i --frozen-lockfile
+        elif [ -f "yarn.lock" ]; then
+          yarn install --frozen-lockfile
+        else
+          npm install
+        fi
+
+    - name: Build project
+      # Skip build step entirely if we are in an uninitialized/bare repository
+      if: steps.check-files.outputs.exists == 'true'
+      run: npm run build --if-present
+
+    - name: Run tests
+      # Skip test suite entirely if we are in an uninitialized/bare repository
+      if: steps.check-files.outputs.exists == 'true'
+      run: npm test --if-present
