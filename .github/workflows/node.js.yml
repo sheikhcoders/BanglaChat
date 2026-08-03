@@ -5,14 +5,35 @@ name: Node.js CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
+    paths-ignore:
+      - "README.md"
+      - ".github/PULL_REQUEST_TEMPLATE.md"
+      - ".github/ISSUE_TEMPLATE/**"
+      - ".jules/**"
+      - "SECURITY.md"
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
+    paths-ignore:
+      - "README.md"
+      - ".github/PULL_REQUEST_TEMPLATE.md"
+      - ".github/ISSUE_TEMPLATE/**"
+      - ".jules/**"
+      - "SECURITY.md"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
 
     strategy:
       matrix:
@@ -20,12 +41,49 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Check package.json and lockfile
+        id: check-package-json
+        run: |
+          if [ -f "package.json" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            if [ -f "package-lock.json" ]; then
+              echo "cache_type=npm" >> $GITHUB_OUTPUT
+            elif [ -f "yarn.lock" ]; then
+              echo "cache_type=yarn" >> $GITHUB_OUTPUT
+            elif [ -f "pnpm-lock.yaml" ]; then
+              echo "cache_type=pnpm" >> $GITHUB_OUTPUT
+            else
+              echo "cache_type=" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "cache_type=" >> $GITHUB_OUTPUT
+            if find . -type f \( -name "*.js" -o -name "*.jsx" -o -name "*.ts" -o -name "*.tsx" -o -name "*.json" -o -name "*.css" \) -not -path "./.git/*" -not -path "./.jules/*" -not -path "./.github/*" | grep -q .; then
+              echo "::error::package.json is missing but source code files are present! CI must fail to prevent silent bypass."
+              exit 1
+            fi
+          fi
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        if: steps.check-package-json.outputs.exists == 'true'
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: ${{ steps.check-package-json.outputs.cache_type }}
+
+      - name: Install dependencies
+        if: steps.check-package-json.outputs.exists == 'true'
+        run: npm ci
+
+      - name: Build code
+        if: steps.check-package-json.outputs.exists == 'true'
+        run: npm run build --if-present
+
+      - name: Run tests
+        if: steps.check-package-json.outputs.exists == 'true'
+        run: npm test
