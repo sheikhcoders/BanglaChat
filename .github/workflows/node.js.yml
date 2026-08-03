@@ -46,17 +46,44 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Check package.json and lockfile
+        id: check-package-json
+        run: |
+          if [ -f "package.json" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            if [ -f "package-lock.json" ]; then
+              echo "cache_type=npm" >> $GITHUB_OUTPUT
+            elif [ -f "yarn.lock" ]; then
+              echo "cache_type=yarn" >> $GITHUB_OUTPUT
+            elif [ -f "pnpm-lock.yaml" ]; then
+              echo "cache_type=pnpm" >> $GITHUB_OUTPUT
+            else
+              echo "cache_type=" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "cache_type=" >> $GITHUB_OUTPUT
+            if find . -type f \( -name "*.js" -o -name "*.jsx" -o -name "*.ts" -o -name "*.tsx" -o -name "*.json" -o -name "*.css" \) -not -path "./.git/*" -not -path "./.jules/*" -not -path "./.github/*" | grep -q .; then
+              echo "::error::package.json is missing but source code files are present! CI must fail to prevent silent bypass."
+              exit 1
+            fi
+          fi
+
       - name: Use Node.js ${{ matrix.node-version }}
+        if: steps.check-package-json.outputs.exists == 'true'
         uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
         with:
           node-version: ${{ matrix.node-version }}
-          cache: "npm"
+          cache: ${{ steps.check-package-json.outputs.cache_type }}
 
       - name: Install dependencies
+        if: steps.check-package-json.outputs.exists == 'true'
         run: npm ci
 
       - name: Build code
+        if: steps.check-package-json.outputs.exists == 'true'
         run: npm run build --if-present
 
       - name: Run tests
+        if: steps.check-package-json.outputs.exists == 'true'
         run: npm test
