@@ -1,0 +1,8 @@
+# Sentinel's Critical Security Journal
+
+This journal documents critical security learnings, reusable security patterns, and vulnerabilities discovered in the BanglaChat repository.
+
+## 2026-08-06 - GitHub Actions Supply Chain Attack Mitigation
+**Vulnerability:** Runaway/rogue execution, compromised third-party dependencies/actions, and unintended credential exposure in CI/CD workflows.
+**Learning:** Default workflows often lack job timeouts, use mutable action tags (e.g., `@v4`) which can be updated to point to malicious code by an attacker, and checkout code with elevated/persist-credentials enabled by default. Furthermore, in uninitialized/bare repositories, lacking checks for package manifests like `package.json` results in predictable workflow failures (e.g., "Dependencies lock file is not found").
+**Prevention:** Pin all action references to immutable 40-character commit SHAs. Set `persist-credentials: false` in checkout actions. Explicitly declare job-level `timeout-minutes: 15` and restrict global permissions to `permissions: contents: read` or specific least-privilege tokens. Implement step-level conditional existence checks for `package.json` to handle bootstrapping and uninitialized states cleanly.
