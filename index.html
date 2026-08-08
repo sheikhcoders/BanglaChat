@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="bn">
+  <head>
+    <meta charset="UTF-8" />
+    <title>🇧🇩 বাংলাচ্যাট / BanglaChat</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 600px;
+        margin: 40px auto;
+        padding: 20px;
+        background: #f1f5f9;
+      }
+      main {
+        background: white;
+        padding: 24px;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+      .chat-log {
+        height: 250px;
+        overflow-y: auto;
+        border: 1px solid #cbd5e1;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 16px;
+        background: #f8fafc;
+      }
+      .chat-log:focus-visible {
+        outline: 2px solid #059669;
+        outline-offset: 2px;
+      }
+      form {
+        display: flex;
+        gap: 8px;
+      }
+      input {
+        flex: 1;
+        padding: 10px;
+        border: 2px solid #cbd5e1;
+        border-radius: 8px;
+        outline: none;
+      }
+      input:focus-visible {
+        outline: 2px solid #059669;
+        outline-offset: 2px;
+      }
+      button {
+        background: #059669;
+        color: white;
+        border: none;
+        padding: 10px 18px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      button:hover {
+        background: #047857;
+      }
+      button:focus-visible {
+        outline: 2px solid #059669;
+        outline-offset: 2px;
+      }
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        border: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1 style="text-align: center">
+        <span role="img" aria-label="Bangladesh Flag">🇧🇩</span> বাংলাচ্যাট /
+        BanglaChat
+      </h1>
+      <div
+        id="log"
+        role="log"
+        aria-live="polite"
+        class="chat-log"
+        tabindex="0"
+        aria-label="চ্যাট ইতিহাস / Chat history"
+      >
+        <p>
+          <strong>🤖 বট / Bot:</strong> স্বাগতম! নতুন বার্তা পাঠান। / Welcome!
+          Please send a message.
+        </p>
+      </div>
+      <form id="frm">
+        <label for="msg" class="sr-only">বার্তা / Message</label>
+        <input
+          id="msg"
+          placeholder="বার্তা লিখুন... / Type a message..."
+          required
+          autocomplete="off"
+        />
+        <button type="submit" aria-label="বার্তা পাঠান / Send message">
+          পাঠান / Send
+        </button>
+      </form>
+    </main>
+    <script>
+      document.getElementById("frm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const input = document.getElementById("msg"),
+          text = input.value.trim();
+        if (!text) return;
+        const log = document.getElementById("log"),
+          p = document.createElement("p");
+        const strong = document.createElement("strong");
+        strong.textContent = "👤 আপনি / You: ";
+        p.append(strong, document.createTextNode(text));
+        log.appendChild(p);
+        input.value = "";
+        log.scrollTop = log.scrollHeight;
+      });
+    </script>
+  </body>
+</html>
