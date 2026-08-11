@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="bn">
+  <head>
+    <meta charset="UTF-8" />
+    <title>🇧🇩 বাংলাচ্যাট / BanglaChat</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 600px;
+        margin: 40px auto;
+        padding: 20px;
+        background: #f1f5f9;
+      }
+      main {
+        background: white;
+        padding: 24px;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+      .chat-log {
+        height: 250px;
+        overflow-y: auto;
+        border: 1px solid #cbd5e1;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 16px;
+        background: #f8fafc;
+        /* Performance Optimization (Bolt): Apply CSS containment 'contain: content'. */
+        /* This informs the browser's rendering engine that the element's subtree is completely */
+        /* independent of the rest of the page. Recalculating style, layout, and paint of messages */
+        /* inside the log will never trigger expensive full-document reflows/repaints, confining */
+        /* render engine updates locally and significantly improving performance during scroll and message insertions. */
+        contain: content;
+        overflow-wrap: break-word;
+        word-break: break-word;
+      }
+      .chat-log:focus-visible,
+      input:focus-visible,
+      button:focus-visible {
+        outline: 2px solid #059669;
+        outline-offset: 2px;
+      }
+      form {
+        display: flex;
+        gap: 8px;
+        align-items: flex-start;
+      }
+      .input-wrapper {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      input {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 10px;
+        border: 2px solid #cbd5e1;
+        border-radius: 8px;
+        outline: none;
+      }
+      input:focus {
+        border-color: #059669;
+      }
+      button {
+        background: #059669;
+        color: white;
+        border: none;
+        padding: 10px 18px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      button:hover {
+        background: #047857;
+      }
+      .char-counter {
+        font-size: 0.75rem;
+        color: #64748b;
+        align-self: flex-start;
+        margin-left: 4px;
+        transition: color 0.15s ease;
+      }
+      .char-counter.warning {
+        color: #d97706;
+        font-weight: 600;
+      }
+      .char-counter.danger {
+        color: #dc2626;
+        font-weight: bold;
+      }
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        border: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1 style="text-align: center">
+        <span role="img" aria-label="Bangladesh Flag">🇧🇩</span> বাংলাচ্যাট /
+        BanglaChat
+      </h1>
+      <div
+        id="log"
+        role="log"
+        aria-live="polite"
+        class="chat-log"
+        tabindex="0"
+        aria-label="চ্যাট ইতিহাস / Chat history"
+      >
+        <p>
+          <strong>🤖 বট / Bot:</strong> স্বাগতম! নতুন বার্তা পাঠান। / Welcome!
+          Please send a message.
+        </p>
+      </div>
+      <form id="frm">
+        <div class="input-wrapper">
+          <label for="msg" class="sr-only">বার্তা / Message</label>
+          <input
+            id="msg"
+            placeholder="বার্তা লিখুন... / Type a message..."
+            required
+            autocomplete="off"
+            maxlength="500"
+            aria-describedby="char-count"
+          />
+          <div id="char-count" class="char-counter" aria-live="polite">
+            ০ / ৫০০ অক্ষর | 0 / 500 characters
+          </div>
+        </div>
+        <button type="submit" aria-label="বার্তা পাঠান / Send message">
+          পাঠান / Send
+        </button>
+      </form>
+    </main>
+    <script>
+      // Performance Optimization (Bolt): Cache DOM element references once outside the event listener.
+      // This avoids repeated synchronous DOM tree queries (`document.getElementById`) on every submit action.
+      // Expected impact: Reduces submission overhead and DOM traversal search time to O(1) after initialization.
+      const frm = document.getElementById("frm");
+      const input = document.getElementById("msg");
+      const log = document.getElementById("log");
+      const counter = document.getElementById("char-count");
+
+      // Helper function to translate English digits to Bengali digits
+      function toBengaliDigits(num) {
+        const bn = ["০", "১", "২", "৩", "৪", "৫", "৬", "৭", "৮", "৯"];
+        return num.toString().replace(/[0-9]/g, (w) => bn[parseInt(w, 10)]);
+      }
+
+      // Real-time character counter update
+      input.addEventListener("input", () => {
+        const len = input.value.length;
+        counter.textContent = `${toBengaliDigits(len)} / ৫০০ অক্ষর | ${len} / 500 characters`;
+        if (len >= 500) {
+          counter.className = "char-counter danger";
+        } else if (len >= 450) {
+          counter.className = "char-counter warning";
+        } else {
+          counter.className = "char-counter";
+        }
+      });
+
+      frm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const text = input.value.trim();
+        if (!text) return;
+
+        // ✅ SECURITY ENHANCEMENT: Input validation on length.
+        // Restricting the message length to 500 characters prevents potential Client-Side
+        // Denial of Service (DoS) and excessive browser memory overhead from processing
+        // abnormally large pasted string inputs during rendering.
+        if (text.length > 500) return;
+
+        const p = document.createElement("p");
+        const strong = document.createElement("strong");
+        strong.textContent = "👤 আপনি / You: ";
+        p.append(strong, document.createTextNode(text));
+        log.appendChild(p);
+
+        // Reset form and counter
+        input.value = "";
+        counter.textContent = "০ / ৫০০ অক্ষর | 0 / 500 characters";
+        counter.className = "char-counter";
+
+        log.scrollTop = log.scrollHeight;
+      });
+    </script>
+  </body>
+</html>
