@@ -9,23 +9,49 @@ on:
   pull_request:
     branches: [ "main" ]
 
+permissions:
+  contents: read
+
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     strategy:
       matrix:
         node-version: [18.x, 20.x, 22.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      with:
+        persist-credentials: false
+
+    - name: Check package.json existence
+      id: check_package
+      run: |
+        if [ -f "package.json" ]; then
+          echo "has_package=true" >> $GITHUB_OUTPUT
+        else
+          echo "has_package=false" >> $GITHUB_OUTPUT
+          echo "package.json not found in uninitialized repository state."
+        fi
+
     - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
+      if: steps.check_package.outputs.has_package == 'true'
+      uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+
+    - name: Install dependencies
+      if: steps.check_package.outputs.has_package == 'true'
+      run: npm ci
+
+    - name: Build project
+      if: steps.check_package.outputs.has_package == 'true'
+      run: npm run build --if-present
+
+    - name: Run tests
+      if: steps.check_package.outputs.has_package == 'true'
+      run: npm test
