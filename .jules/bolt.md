@@ -1,0 +1,3 @@
+## 2026-08-16 - Eliminate Layout Thrashing and Batch DOM Updates on Form Submission
+**Learning:** Appending user messages and typing indicators separately to the chat log forces multiple style calculations and reflows, while reading `log.scrollHeight` after each write causes forced synchronous layout thrashing. Using a `DocumentFragment` batches DOM insertions into a single mutation, allowing `log.scrollTop = log.scrollHeight` to be evaluated once without triggering layout thrashing.
+**Action:** Always batch DOM insertions using `DocumentFragment` when creating multiple sibling elements in dynamic containers, and consolidate scroll positioning updates after batching.
