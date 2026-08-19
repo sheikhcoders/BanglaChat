@@ -1,0 +1,4 @@
+## 2026-08-19 - GitHub Actions Supply Chain Hardening & Uninitialized Repo Guards
+**Vulnerability:** Unpinned third-party GitHub Actions and missing explicit token permissions in CI workflows expose jobs to supply-chain tampering and overly permissive token access. Additionally, missing `package.json` checks cause CI job failures on uninitialized repo states.
+**Learning:** Default GITHUB_TOKEN permissions grant write scope if unconfigured, and floating action tags (like `@v4`) can be mutated upstream. In uninitialized states, `actions/setup-node` caching fails when lockfiles are missing.
+**Prevention:** Explicitly specify `permissions: contents: read`, pin all actions to immutable 40-character commit SHAs, set `persist-credentials: false`, enforce `timeout-minutes`, and guard node setup steps behind file existence checks.
