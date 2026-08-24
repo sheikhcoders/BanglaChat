@@ -1,0 +1,4 @@
+## 2026-08-24 - CI/CD Permission Hardening & Supply Chain Protection
+**Vulnerability:** Permissive default `GITHUB_TOKEN` permissions, unpinned third-party GitHub Actions, and unhandled uninitialized repository states in CI workflows.
+**Learning:** Default workflow templates often grant write permissions and use mutable tag references for third-party actions, exposing workflows to potential supply chain tampering or repository compromise. Additionally, actions like `setup-node` fail when `package.json` is missing in uninitialized repositories.
+**Prevention:** Always enforce `permissions: contents: read` globally and per job, set `persist-credentials: false` on `actions/checkout`, set explicit 15-minute job timeouts, pin third-party actions to 40-character commit SHAs, and guard dependency/build steps with a `package.json` check step.
