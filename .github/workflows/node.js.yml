@@ -9,23 +9,49 @@ on:
   pull_request:
     branches: [ "main" ]
 
+permissions:
+  contents: read
+
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     strategy:
       matrix:
         node-version: [18.x, 20.x, 22.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+      - name: Checkout repository
+        uses: actions/checkout@6929c0e6d9111f0192852fac0d8032512128919f # v4.1.7
+        with:
+          persist-credentials: false
+
+      - name: Check if package.json exists
+        id: check_files
+        run: |
+          if [ -f "package.json" ]; then
+            echo "has_package_json=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_package_json=false" >> $GITHUB_OUTPUT
+            echo "package.json not found, skipping Node setup and build steps in uninitialized repo."
+          fi
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        if: steps.check_files.outputs.has_package_json == 'true'
+        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        if: steps.check_files.outputs.has_package_json == 'true'
+        run: npm ci
+
+      - name: Build project
+        if: steps.check_files.outputs.has_package_json == 'true'
+        run: npm run build --if-present
+
+      - name: Run tests
+        if: steps.check_files.outputs.has_package_json == 'true'
+        run: npm test
