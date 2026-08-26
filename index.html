@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="bn">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- Content Security Policy (CSP): Prevents XSS and limits script execution strictly to local trusted assets. -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' data:; connect-src 'self';"
+    />
+    <title>🇧🇩 বাংলাচ্যাট / BanglaChat</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 600px;
+        margin: 40px auto;
+        padding: 20px;
+        background: #f1f5f9;
+      }
+      main {
+        background: white;
+        padding: 24px;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+      .chat-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+      .chat-header h2 {
+        font-size: 1rem;
+        margin: 0;
+        color: #334155;
+      }
+      .clear-log-btn {
+        background: transparent;
+        color: #64748b;
+        border: 1px solid #cbd5e1;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        transition:
+          color 0.15s ease,
+          background-color 0.15s ease,
+          border-color 0.15s ease;
+      }
+      .clear-log-btn:hover {
+        color: #dc2626;
+        background: #fef2f2;
+        border-color: #fca5a5;
+      }
+      .clear-log-btn:active {
+        transform: scale(0.95);
+      }
+      .chat-container {
+        position: relative;
+        margin-bottom: 16px;
+      }
+      .chat-log {
+        height: 250px;
+        overflow-y: auto;
+        border: 1px solid #cbd5e1;
+        padding: 12px;
+        border-radius: 8px;
+        background: #f8fafc;
+        /* Performance Optimization (Bolt): Apply CSS containment 'contain: content'. */
+        /* This informs the browser's rendering engine that the element's subtree is completely */
+        /* independent of the rest of the page. Recalculating style, layout, and paint of messages */
+        /* inside the log will never trigger expensive full-document reflows/repaints, confining */
+        /* render engine updates locally and significantly improving performance during scroll and message insertions. */
+        contain: content;
+        overflow-wrap: break-word;
+        word-break: break-word;
+      }
+      .scroll-bottom-btn {
+        position: absolute;
+        bottom: 12px;
+        right: 12px;
+        background: #059669;
+        color: white;
+        border: none;
+        border-radius: 20px;
+        padding: 6px 12px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        transition:
+          background-color 0.15s ease,
+          transform 0.15s ease,
+          opacity 0.15s ease;
+        z-index: 10;
+      }
+      .scroll-bottom-btn:hover {
+        background: #047857;
+      }
+      .scroll-bottom-btn:active {
+        transform: scale(0.95);
+      }
+      .chat-log p {
+        margin: 8px 0;
+        animation: chatMessageFadeIn 0.25s ease-out;
+      }
+      @keyframes chatMessageFadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(4px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .chat-log:focus-visible,
+      input:focus-visible,
+      button:focus-visible {
+        outline: 2px solid #059669;
+        outline-offset: 2px;
+      }
+      .quick-replies {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-bottom: 12px;
+      }
+      .chip-btn {
+        background: #e2e8f0;
+        color: #334155;
+        border: 1px solid #cbd5e1;
+        padding: 4px 10px;
+        border-radius: 16px;
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition:
+          background-color 0.15s ease,
+          transform 0.1s ease;
+      }
+      .chip-btn:hover {
+        background: #cbd5e1;
+      }
+      .chip-btn:active {
+        transform: scale(0.95);
+      }
+      form {
+        display: flex;
+        gap: 8px;
+        align-items: flex-start;
+      }
+      .input-wrapper {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .input-field-container {
+        position: relative;
+        display: flex;
+        align-items: center;
+        width: 100%;
+      }
+      input {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 10px 36px 10px 10px;
+        border: 2px solid #cbd5e1;
+        border-radius: 8px;
+        outline: none;
+      }
+      .clear-btn {
+        position: absolute;
+        right: 8px;
+        background: transparent;
+        color: #64748b;
+        border: none;
+        padding: 4px 8px;
+        border-radius: 50%;
+        font-size: 0.85rem;
+        cursor: pointer;
+        line-height: 1;
+        transition:
+          color 0.15s ease,
+          background-color 0.15s ease;
+      }
+      .clear-btn:hover {
+        color: #1e293b;
+        background: #e2e8f0;
+      }
+      .clear-btn:focus-visible {
+        outline: 2px solid #059669;
+        outline-offset: 1px;
+      }
+      input:focus {
+        border-color: #059669;
+      }
+      button {
+        background: #059669;
+        color: white;
+        border: none;
+        padding: 10px 18px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        transition:
+          background-color 0.15s ease,
+          transform 0.1s ease;
+      }
+      button:hover {
+        background: #047857;
+      }
+      button:active {
+        transform: scale(0.97);
+      }
+      button:disabled {
+        background: #94a3b8;
+        cursor: not-allowed;
+        opacity: 0.7;
+        transform: none;
+      }
+      .char-counter {
+        font-size: 0.75rem;
+        color: #64748b;
+        align-self: flex-start;
+        margin-left: 4px;
+        transition: color 0.15s ease;
+      }
+      .char-counter.warning {
+        color: #d97706;
+        font-weight: 600;
+      }
+      .char-counter.danger {
+        color: #dc2626;
+        font-weight: bold;
+      }
+      .chat-timestamp {
+        font-size: 0.75rem;
+        color: #64748b;
+        margin: 0 6px;
+        font-weight: normal;
+      }
+      .copy-btn {
+        background: transparent;
+        color: #64748b;
+        border: none;
+        padding: 2px 6px;
+        margin-left: 6px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        cursor: pointer;
+        transition:
+          color 0.15s ease,
+          background-color 0.15s ease;
+      }
+      .copy-btn:hover {
+        color: #059669;
+        background: #e2e8f0;
+      }
+      .copy-btn:focus-visible {
+        outline: 2px solid #059669;
+        outline-offset: 1px;
+      }
+      .typing-indicator {
+        color: #64748b;
+        font-style: italic;
+      }
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        border: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1 style="text-align: center">
+        <span role="img" aria-label="Bangladesh Flag">🇧🇩</span> বাংলাচ্যাট /
+        BanglaChat
+      </h1>
+      <div class="chat-header">
+        <h2>💬 চ্যাট ইতিহাস / Chat History</h2>
+        <button
+          type="button"
+          id="clear-log-btn"
+          class="clear-log-btn"
+          aria-label="ইতিহাস মুছুন / Clear history"
+          title="ইতিহাস মুছুন / Clear history"
+        >
+          🗑️ মুছুন / Clear
+        </button>
+      </div>
+      <div class="chat-container">
+        <div
+          id="log"
+          role="log"
+          aria-live="polite"
+          class="chat-log"
+          tabindex="0"
+          aria-label="চ্যাট ইতিহাস / Chat history"
+        >
+          <p>
+            <strong>🤖 বট / Bot:</strong> স্বাগতম! নতুন বার্তা পাঠান। / Welcome!
+            Please send a message.
+            <button
+              type="button"
+              class="copy-btn"
+              aria-label="বার্তা অনুলিপি করুন / Copy message"
+              title="বার্তা অনুলিপি করুন / Copy message"
+            >
+              📋
+            </button>
+          </p>
+        </div>
+        <button
+          type="button"
+          id="scroll-btn"
+          class="scroll-bottom-btn"
+          aria-label="নিচে যান / Scroll to bottom"
+          title="নিচে যান / Scroll to bottom"
+          hidden
+        >
+          ⬇ নিচে যান / Scroll to bottom
+        </button>
+      </div>
+      <div
+        class="quick-replies"
+        role="group"
+        aria-label="দ্রুত উত্তর / Quick replies"
+      >
+        <button type="button" class="chip-btn" data-msg="হ্যালো! / Hello!">
+          👋 হ্যালো / Hello
+        </button>
+        <button
+          type="button"
+          class="chip-btn"
+          data-msg="কেমন আছেন? / How are you?"
+        >
+          ❓ কেমন আছেন? / How are you?
+        </button>
+        <button type="button" class="chip-btn" data-msg="ধন্যবাদ! / Thank you!">
+          🙏 ধন্যবাদ / Thank you
+        </button>
+      </div>
+      <form id="frm">
+        <div class="input-wrapper">
+          <label for="msg" class="sr-only">বার্তা / Message</label>
+          <div class="input-field-container">
+            <input
+              id="msg"
+              placeholder="বার্তা লিখুন... / Type a message..."
+              required
+              autocomplete="off"
+              maxlength="500"
+              aria-describedby="char-count"
+            />
+            <button
+              type="button"
+              id="clear-btn"
+              class="clear-btn"
+              aria-label="লেখা মুছুন (Esc) / Clear text (Esc)"
+              title="লেখা মুছুন (Esc) / Clear text (Esc)"
+              hidden
+            >
+              ✖
+            </button>
+          </div>
+          <div id="char-count" class="char-counter" aria-live="polite">
+            ০ / ৫০০ অক্ষর | 0 / 500 characters
+          </div>
+        </div>
+        <button
+          type="submit"
+          id="submit-btn"
+          aria-label="বার্তা লিখুন... / Type a message to send"
+          title="বার্তা লিখুন... / Type a message to send"
+          disabled
+        >
+          পাঠান / Send
+        </button>
+      </form>
+    </main>
+    <script src="app.js" defer></script>
+  </body>
+</html>
