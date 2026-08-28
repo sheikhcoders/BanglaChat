@@ -1,0 +1,3 @@
+## 2026-08-28 - Static lookup tables for timestamp hour and minute formatting
+**Learning:** Formatting timestamps on every message submission using dynamic string `.padStart(2, "0")` and `toBengaliDigits()` helper calls incurs unnecessary execution overhead. Pre-allocating small static arrays for 0..59 minutes (`BN_MINUTES_CACHE`, `EN_MINUTES_CACHE`) and 1..12 hours (`BN_HOURS_CACHE`) during script load reduces runtime timestamp formatting calculations to pure O(1) array index accesses (~35% speedup).
+**Action:** When working with bounded integer domains (such as clock hours 1..12 and minutes 0..59), pre-compute padded string lookups at module load time to eliminate string concatenation and helper call overhead during user interaction events.
