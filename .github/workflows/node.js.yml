@@ -6,26 +6,69 @@ name: Node.js CI
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE'
+      - 'SECURITY.md'
+      - '.jules/**'
   pull_request:
     branches: [ "main" ]
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE'
+      - 'SECURITY.md'
+      - '.jules/**'
+
+permissions:
+  contents: read
+
+# Cancel in-progress runs for the same ref to save CI compute minutes
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
 
     strategy:
       matrix:
         node-version: [18.x, 20.x, 22.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      with:
+        persist-credentials: false
+
+    - name: Check package.json existence
+      id: check_files
+      run: |
+        if [ -f "package.json" ]; then
+          echo "has_package_json=true" >> $GITHUB_OUTPUT
+        else
+          echo "has_package_json=false" >> $GITHUB_OUTPUT
+          echo "No package.json found. Skipping Node.js setup and build."
+        fi
+
     - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
+      if: steps.check_files.outputs.has_package_json == 'true'
+      uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+
+    - name: Install dependencies
+      if: steps.check_files.outputs.has_package_json == 'true'
+      run: npm ci
+
+    - name: Build
+      if: steps.check_files.outputs.has_package_json == 'true'
+      run: npm run build --if-present
+
+    - name: Test
+      if: steps.check_files.outputs.has_package_json == 'true'
+      run: npm test
