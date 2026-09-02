@@ -1,0 +1,3 @@
+## 2026-08-31 - Zero-Cost CI Guards and Path Filtering for Uninitialized Repositories
+**Learning:** In uninitialized repository states missing `package.json`, default GitHub Actions Node.js and Next.js workflows fail during setup/dependency steps and run unnecessarily across multiple matrix nodes on documentation/journal updates, wasting up to 3 runner minutes per commit.
+**Action:** Place an inline `check_files` guard step (`if [ -f "package.json" ]`) immediately after checkout to bypass build steps in <2 seconds, and configure `paths-ignore` (`**.md`, `.jules/**`) to eliminate workflow triggers for non-code updates.
