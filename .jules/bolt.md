@@ -1,0 +1,3 @@
+## 2026-09-06 - CI Pipeline Optimization & Uninitialized Repository Guards
+**Learning:** In uninitialized repositories lacking `package.json` and `package-lock.json`, standard Node.js CI actions fail on dependency resolution or cache setup. Furthermore, non-code modifications (like markdown updates or `.jules/` journal entries) trigger redundant CI runs, while rapid consecutive pushes accumulate pending runner jobs.
+**Action:** Always add `paths-ignore` for non-code files (`'**.md'`, `'SECURITY.md'`, `'.jules/**'`), strict concurrency cancellation (`cancel-in-progress: true`), job timeouts (`timeout-minutes: 15`), and a zero-latency inline `package.json` existence guard in GitHub Actions workflows to optimize CI compute efficiency and prevent false build failures.
