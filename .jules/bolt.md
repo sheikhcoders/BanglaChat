@@ -1,0 +1,3 @@
+## 2026-09-07 - CI Workflow Optimization for Uninitialized Repository States
+**Learning:** In repositories without an initialized `package.json` or lockfile, standard `actions/setup-node` with `cache: 'npm'` fails and wastes compute cycles trying to resolve non-existent package manifests across matrix jobs. Furthermore, pushing multiple commits in rapid succession without concurrency controls leads to redundant workflow runs consuming runner queue time.
+**Action:** Always add an inline `package.json` existence check step before `setup-node` with `if: steps.check_files.outputs.has_package_json == 'true'` step guards, apply `concurrency: cancel-in-progress: true`, and include `paths-ignore` for non-code files (`**.md`, `.jules/**`) to ensure fast and efficient CI runs.
