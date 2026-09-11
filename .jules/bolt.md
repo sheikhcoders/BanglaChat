@@ -1,0 +1,3 @@
+## 2026-09-11 - CI Workflow Optimization with Paths-Ignore and Step Guards
+**Learning:** Running full CI build matrices on non-code commits (like markdown docs or .jules entries) consumes unnecessary compute runner hours and delays pipeline feedback. Unconditional cache and build setups on uninitialized repos fail early when `package.json` or lockfiles are missing.
+**Action:** Always add `paths-ignore` for non-code files (`'**.md'`, `'.jules/**'`), set `cancel-in-progress: true` in workflow concurrency options, enforce job-level `timeout-minutes`, and add zero-overhead inline file existence step guards before dependency installation and testing.
