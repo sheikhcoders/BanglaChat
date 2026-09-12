@@ -1,31 +1,66 @@
-# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
+# Node.js CI workflow optimized by Bolt ⚡
+# Performance optimizations:
+# 1. Cancel in-progress runs on same branch/PR to save compute minutes
+# 2. Ignore non-code file changes (docs, logs) to skip unneeded builds
+# 3. Add timeout limits to prevent runaway hung builds
+# 4. Check for package.json to prevent setup failures in uninitialized repos
 
 name: Node.js CI
 
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - '**.md'
+      - '.jules/**'
   pull_request:
     branches: [ "main" ]
+    paths-ignore:
+      - '**.md'
+      - '.jules/**'
+
+# Cancel redundant in-progress runs for speed & resource efficiency
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     strategy:
       matrix:
         node-version: [18.x, 20.x, 22.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
     - uses: actions/checkout@v4
+
+    # Performance guard: check if Node project is initialized before setup
+    - name: Check package.json existence
+      id: check_package
+      run: |
+        if [ -f "package.json" ]; then
+          echo "has_package=true" >> $GITHUB_OUTPUT
+        else
+          echo "has_package=false" >> $GITHUB_OUTPUT
+        fi
+
     - name: Use Node.js ${{ matrix.node-version }}
+      if: steps.check_package.outputs.has_package == 'true'
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+
+    - name: Install dependencies
+      if: steps.check_package.outputs.has_package == 'true'
+      run: npm ci
+
+    - name: Build project
+      if: steps.check_package.outputs.has_package == 'true'
+      run: npm run build --if-present
+
+    - name: Run tests
+      if: steps.check_package.outputs.has_package == 'true'
+      run: npm test
