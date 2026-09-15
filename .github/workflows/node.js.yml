@@ -6,13 +6,25 @@ name: Node.js CI
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - '**.md'
+      - '.jules/**'
   pull_request:
     branches: [ "main" ]
+    paths-ignore:
+      - '**.md'
+      - '.jules/**'
+
+# Cancel in-progress runs for the same ref to save compute resources
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
 
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     strategy:
       matrix:
@@ -21,11 +33,26 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - name: Check if package.json exists
+      id: check_package_json
+      run: |
+        if [ -f package.json ]; then
+          echo "has_package=true" >> $GITHUB_OUTPUT
+        else
+          echo "has_package=false" >> $GITHUB_OUTPUT
+        fi
     - name: Use Node.js ${{ matrix.node-version }}
+      if: steps.check_package_json.outputs.has_package == 'true'
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+    - name: Install dependencies
+      if: steps.check_package_json.outputs.has_package == 'true'
+      run: npm ci
+    - name: Build project
+      if: steps.check_package_json.outputs.has_package == 'true'
+      run: npm run build --if-present
+    - name: Run tests
+      if: steps.check_package_json.outputs.has_package == 'true'
+      run: npm test

@@ -1,0 +1,3 @@
+## 2026-09-15 - CI Workflow Concurrency and Path Filtering Optimization
+**Learning:** CI workflows trigger on documentation/markdown changes and rapid sequential commits, leading to redundant runner allocation and failed builds in uninitialized repository states missing `package.json`. Adding `paths-ignore` (`'**.md'`, `'.jules/**'`), `concurrency` cancellation (`cancel-in-progress: true`), job timeouts (`timeout-minutes: 15`), and inline `package.json` check guards eliminates wasted compute resources and prevents build failures in uninitialized repository states.
+**Action:** Always check and optimize GitHub workflow triggers for path filtering, concurrency rules, job timeouts, and package file existence guards in early-stage or uninitialized repositories.
