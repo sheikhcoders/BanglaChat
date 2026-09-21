@@ -1,0 +1,3 @@
+## 2026-09-20 - CI Workflow Performance and Compute Optimization
+**Learning:** Running full CI matrix builds on non-code changes (markdown/docs) and redundant rapid pushes wastes runner minutes and delays PR feedback. Adding `paths-ignore` (`**.md`, `.jules/**`), `concurrency` cancellation (`cancel-in-progress: true`), `timeout-minutes: 15`, and step guards (`check_package`) optimizes build throughput and prevents failures in uninitialized repositories without package.json.
+**Action:** Always include paths-ignore filters, concurrency controls, timeout limits, and step guards when setting up or tuning GitHub Actions workflows in Node/Next.js repositories.
