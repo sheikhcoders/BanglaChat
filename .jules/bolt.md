@@ -1,0 +1,3 @@
+## 2026-09-23 - CI Workflow Performance and Resource Efficiency Optimization
+**Learning:** In uninitialized or light repository states without `package.json` or `package-lock.json`, standard Node/CI workflows waste runner compute and fail on setup-node caching (`cache: npm`). Using `paths-ignore` filters (`**.md`, `.jules/**`), `concurrency` cancellation (`cancel-in-progress: true`), `timeout-minutes: 15`, inline step guards (`check-pkg`), and conditional caching (`hashFiles('package-lock.json') != ''`) drastically reduces CI execution time and eliminates unnecessary runner consumption.
+**Action:** Always condition `actions/cache` and package manager commands on lockfile/package file availability and apply `paths-ignore` filters on documentation-only updates.
