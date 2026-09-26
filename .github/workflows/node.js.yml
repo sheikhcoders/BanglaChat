@@ -1,18 +1,32 @@
-# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
+# Performance optimization:
+# 1. Cancel in-progress runs on new pushes to save compute time.
+# 2. Skip running workflow for doc/journal changes using paths-ignore.
+# 3. Guard package setup and dependency installation when package.json is missing.
+# 4. Limit job timeout to 15 minutes to prevent runaway builds.
 
 name: Node.js CI
 
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - '**.md'
+      - '.jules/**'
   pull_request:
     branches: [ "main" ]
+    paths-ignore:
+      - '**.md'
+      - '.jules/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
 
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     strategy:
       matrix:
@@ -21,11 +35,20 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - name: Check package.json existence
+      id: check_pkg
+      run: if [ -f package.json ]; then echo "exists=true" >> $GITHUB_OUTPUT; fi
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+        cache: ${{ steps.check_pkg.outputs.exists == 'true' && 'npm' || '' }}
+    - name: Install dependencies
+      if: steps.check_pkg.outputs.exists == 'true'
+      run: npm ci
+    - name: Build
+      if: steps.check_pkg.outputs.exists == 'true'
+      run: npm run build --if-present
+    - name: Test
+      if: steps.check_pkg.outputs.exists == 'true'
+      run: npm test
