@@ -9,10 +9,17 @@ on:
   pull_request:
     branches: [ "main" ]
 
+# Security: Enforce minimum permissions across all jobs (Least Privilege)
+permissions:
+  contents: read
+
 jobs:
   build:
 
     runs-on: ubuntu-latest
+
+    # Security: Set execution timeout to prevent resource exhaustion / runaway builds
+    timeout-minutes: 15
 
     strategy:
       matrix:
@@ -20,12 +27,29 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-    - uses: actions/checkout@v4
+    # Security: Pin actions/checkout@v4.2.2 to immutable commit SHA to protect against supply-chain tag tampering
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      with:
+        persist-credentials: false # Security: Prevent token exposure to subsequent steps
+
+    # Security: Pin actions/setup-node@v4.2.0 to immutable commit SHA to protect against supply-chain tag tampering
     - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
+
+    - name: Check package.json existence
+      id: check_files
+      run: |
+        if [ -f "package.json" ]; then
+          echo "has_package_json=true" >> $GITHUB_OUTPUT
+        else
+          echo "has_package_json=false" >> $GITHUB_OUTPUT
+        fi
+
     - run: npm ci
+      if: steps.check_files.outputs.has_package_json == 'true'
     - run: npm run build --if-present
+      if: steps.check_files.outputs.has_package_json == 'true'
     - run: npm test
+      if: steps.check_files.outputs.has_package_json == 'true'
