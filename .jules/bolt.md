@@ -1,0 +1,3 @@
+## 2026-09-28 - CI Workflow Performance Optimization for Uninitialized Repository States
+**Learning:** Default CI workflow templates in early-stage or uninitialized repositories execute unnecessary steps (like Node.js setup and npm package commands) when no `package.json` exists, leading to build errors and wasted runner compute minutes. Additionally, documentation changes (`**.md`, `.jules/**`) trigger redundant CI jobs.
+**Action:** Always add `paths-ignore` for non-code files, `concurrency` cancellation controls (`cancel-in-progress: true`), job `timeout-minutes: 15`, and step-level `package.json` guards in GitHub Actions workflows.
