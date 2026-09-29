@@ -1,0 +1,3 @@
+## 2026-09-29 - CI Workflow Speed & Compute Optimization
+**Learning:** Running full CI pipelines on documentation-only edits or letting stale workflow runs continue on rapid push events wastes significant runner compute time and delays developer feedback loops. Furthermore, running `npm ci` without a `package.json` existence guard causes job failures on uninitialized repositories.
+**Action:** Always add `paths-ignore` (`'**.md'`, `'.jules/**'`) to workflow triggers, enforce `concurrency` controls with `cancel-in-progress: true`, cap job execution with `timeout-minutes: 15`, and guard package manager steps with `package.json` existence checks.
