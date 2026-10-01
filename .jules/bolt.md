@@ -1,0 +1,3 @@
+## 2026-10-01 - Workflow Path Filtering and Concurrency Controls
+**Learning:** In repositories with non-code documentation files (`**.md`, `.jules/**`), unmanaged triggers run full CI matrices, consuming unnecessary runner compute time. Adding path filters and concurrency cancellation (`cancel-in-progress: true`) prevents redundant runs and immediately halts superseded builds. Furthermore, guarding Node steps with `package.json` checks prevents build pipeline failures when the repo lacks JavaScript artifacts.
+**Action:** Always include `paths-ignore` for documentation files, concurrency cancellation controls, and file-existence step guards when configuring or tuning GitHub Actions workflows.
