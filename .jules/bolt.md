@@ -1,0 +1,3 @@
+## 2026-10-02 - CI Workflow Optimization & Uninitialized Repo Step Guards
+**Learning:** Non-code commits (like `.md` documentation or `.jules` logs) trigger unnecessary GitHub Actions runner execution, wasting CI compute time and delaying developer feedback loops. Furthermore, running `npm ci` or `setup-node` caching in repositories prior to project initialization causes immediate CI failures due to missing `package.json` or lockfiles.
+**Action:** Always add `paths-ignore` (`'**.md'`, `'.jules/**'`) and `concurrency` cancellation controls (`cancel-in-progress: true`) to CI workflows, along with `timeout-minutes: 15` execution safety limits and conditional `package.json` existence check guards.
