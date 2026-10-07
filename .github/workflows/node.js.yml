@@ -6,13 +6,25 @@ name: Node.js CI
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - '**.md'
+      - '.jules/**'
   pull_request:
     branches: [ "main" ]
+    paths-ignore:
+      - '**.md'
+      - '.jules/**'
+
+# Cancel obsolete in-progress CI runs on new commits to the same PR/branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
 
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     strategy:
       matrix:
@@ -21,11 +33,32 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - name: Check package.json existence
+      id: check_files
+      run: |
+        if [ -f "package.json" ]; then
+          echo "has_package=true" >> $GITHUB_OUTPUT
+        else
+          echo "has_package=false" >> $GITHUB_OUTPUT
+          echo "No package.json found. Skipping npm installation and tests."
+        fi
+        if [ -f "package-lock.json" ]; then
+          echo "has_lockfile=true" >> $GITHUB_OUTPUT
+        else
+          echo "has_lockfile=false" >> $GITHUB_OUTPUT
+        fi
     - name: Use Node.js ${{ matrix.node-version }}
+      if: steps.check_files.outputs.has_package == 'true'
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+        cache: ${{ steps.check_files.outputs.has_lockfile == 'true' && 'npm' || '' }}
+    - name: Install dependencies
+      if: steps.check_files.outputs.has_package == 'true'
+      run: npm ci
+    - name: Build
+      if: steps.check_files.outputs.has_package == 'true'
+      run: npm run build --if-present
+    - name: Run tests
+      if: steps.check_files.outputs.has_package == 'true'
+      run: npm test
