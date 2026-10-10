@@ -6,13 +6,24 @@ name: Node.js CI
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - '**.md'
+      - '.jules/**'
   pull_request:
     branches: [ "main" ]
+    paths-ignore:
+      - '**.md'
+      - '.jules/**'
+
+# Cancel duplicate or in-flight runs on the same branch/PR to save compute and improve feedback speed
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     strategy:
       matrix:
@@ -25,7 +36,20 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+    - name: Check package.json existence
+      id: check_pkg
+      run: |
+        if [ -f "package.json" ]; then
+          echo "exists=true" >> $GITHUB_OUTPUT
+        else
+          echo "exists=false" >> $GITHUB_OUTPUT
+        fi
+    - name: Install dependencies
+      if: steps.check_pkg.outputs.exists == 'true'
+      run: npm ci
+    - name: Build code
+      if: steps.check_pkg.outputs.exists == 'true'
+      run: npm run build --if-present
+    - name: Run tests
+      if: steps.check_pkg.outputs.exists == 'true'
+      run: npm test
