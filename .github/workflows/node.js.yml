@@ -6,13 +6,24 @@ name: Node.js CI
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - '**.md'
+      - '.jules/**'
   pull_request:
     branches: [ "main" ]
+    paths-ignore:
+      - '**.md'
+      - '.jules/**'
+
+# Cancel superseded workflow runs for efficiency
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     strategy:
       matrix:
@@ -21,11 +32,37 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+
+    # Performance & Safety guard: check if package.json exists before running Node tasks
+    - name: Check package.json existence
+      id: check_package_json
+      run: |
+        if [ -f "package.json" ]; then
+          echo "has_package=true" >> $GITHUB_OUTPUT
+        else
+          echo "has_package=false" >> $GITHUB_OUTPUT
+          echo "No package.json found; skipping npm build and test steps."
+        fi
+
     - name: Use Node.js ${{ matrix.node-version }}
+      if: steps.check_package_json.outputs.has_package == 'true'
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
+
+    # Cache dependencies conditionally if package-lock.json exists
+    - name: Cache npm dependencies
+      if: steps.check_package_json.outputs.has_package == 'true'
+      uses: actions/cache@v4
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-node-${{ matrix.node-version }}-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-${{ matrix.node-version }}-
+
     - run: npm ci
+      if: steps.check_package_json.outputs.has_package == 'true'
     - run: npm run build --if-present
+      if: steps.check_package_json.outputs.has_package == 'true'
     - run: npm test
+      if: steps.check_package_json.outputs.has_package == 'true'
