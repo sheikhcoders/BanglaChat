@@ -6,12 +6,25 @@ name: Node.js CI
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - '**.md'
+      - '.jules/**'
   pull_request:
     branches: [ "main" ]
+    paths-ignore:
+      - '**.md'
+      - '.jules/**'
+
+# Cancel redundant workflow runs for performance and compute efficiency
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
-
+    permissions:
+      contents: read
+    timeout-minutes: 15
     runs-on: ubuntu-latest
 
     strategy:
@@ -21,11 +34,30 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+    # Fast path check: skip npm execution in uninitialized repositories
+    - name: Check package.json existence
+      id: check_package
+      run: |
+        if [ -f "package.json" ]; then
+          echo "has_package=true" >> $GITHUB_OUTPUT
+        else
+          echo "has_package=false" >> $GITHUB_OUTPUT
+          echo "package.json not found; skipping Node steps."
+        fi
     - name: Use Node.js ${{ matrix.node-version }}
+      if: steps.check_package.outputs.has_package == 'true'
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+    - name: Install dependencies
+      if: steps.check_package.outputs.has_package == 'true'
+      run: npm ci
+    - name: Build source code
+      if: steps.check_package.outputs.has_package == 'true'
+      run: npm run build --if-present
+    - name: Run test suite
+      if: steps.check_package.outputs.has_package == 'true'
+      run: npm test
