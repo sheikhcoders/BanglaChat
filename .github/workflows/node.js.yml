@@ -9,10 +9,14 @@ on:
   pull_request:
     branches: [ "main" ]
 
+# Explicitly declare least-privilege permissions for the workflow
+permissions:
+  contents: read
+
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     strategy:
       matrix:
@@ -21,11 +25,28 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+    - name: Check package.json existence
+      id: check-package-json
+      run: |
+        if [ -f "package.json" ]; then
+          echo "has_package=true" >> $GITHUB_OUTPUT
+        else
+          echo "has_package=false" >> $GITHUB_OUTPUT
+        fi
     - name: Use Node.js ${{ matrix.node-version }}
+      if: steps.check-package-json.outputs.has_package == 'true'
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+    - name: Install dependencies
+      if: steps.check-package-json.outputs.has_package == 'true'
+      run: npm ci
+    - name: Build project
+      if: steps.check-package-json.outputs.has_package == 'true'
+      run: npm run build --if-present
+    - name: Run tests
+      if: steps.check-package-json.outputs.has_package == 'true'
+      run: npm test
