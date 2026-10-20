@@ -8,6 +8,10 @@ on:
   # Runs on pushes targeting the default branch
   push:
     branches: ["main"]
+    # Bolt Optimization: Bypass deployment pipeline runs when only docs or journal logs are modified
+    paths-ignore:
+      - '**.md'
+      - '.jules/**'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -22,6 +26,8 @@ jobs:
   # Build job
   build:
     runs-on: ubuntu-latest
+    # Bolt Optimization: Prevent runaway build jobs from exceeding reasonable runtime limits
+    timeout-minutes: 15
     permissions:
       contents: read
     steps:
@@ -85,6 +91,8 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    # Bolt Optimization: Set execution timeout on deployment job
+    timeout-minutes: 15
     needs: build
     steps:
       - name: Deploy to GitHub Pages

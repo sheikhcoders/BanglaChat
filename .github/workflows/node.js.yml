@@ -6,13 +6,26 @@ name: Node.js CI
 on:
   push:
     branches: [ "main" ]
+    # Bolt Optimization: Bypass CI runs when only docs or journal logs are modified to conserve compute minutes
+    paths-ignore:
+      - '**.md'
+      - '.jules/**'
   pull_request:
     branches: [ "main" ]
+    paths-ignore:
+      - '**.md'
+      - '.jules/**'
+
+# Bolt Optimization: Automatically cancel outdated pipeline runs on rapid pushes/commits
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    # Bolt Optimization: Set timeout to prevent runaway or hanging jobs from consuming quota
+    timeout-minutes: 15
 
     strategy:
       matrix:
@@ -25,7 +38,15 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+        # Bolt Optimization: Only attempt caching if package-lock exists to prevent setup-node failure in uninitialized repos
+        cache: ${{ hashFiles('package-lock.json') != '' && 'npm' || '' }}
+    # Bolt Optimization: Guard dependency installation and test execution if package.json does not exist
+    - name: Install dependencies
+      if: hashFiles('package.json') != ''
+      run: npm ci
+    - name: Build project
+      if: hashFiles('package.json') != ''
+      run: npm run build --if-present
+    - name: Run tests
+      if: hashFiles('package.json') != ''
+      run: npm test
