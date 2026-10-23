@@ -1,0 +1,3 @@
+## 2026-10-23 - CI Workflow Performance Optimization in Minimal Repositories
+**Learning:** In uninitialized or minimal repositories lacking `package.json`, standard CI workflows consume unnecessary runner time attempting `npm ci`/`npm test` or building non-existent artifacts. Additionally, commits to docs (`.md`) or journal entries trigger redundant CI builds.
+**Action:** Always add `paths-ignore` (`'**.md'`, `'.jules/**'`) to workflow triggers, add concurrency groups with `cancel-in-progress: true` on PR workflows, set `timeout-minutes: 15`, and guard dependency installation steps with `hashFiles('package.json') != ''`.
