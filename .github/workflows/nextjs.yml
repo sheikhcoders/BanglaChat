@@ -8,6 +8,9 @@ on:
   # Runs on pushes targeting the default branch
   push:
     branches: ["main"]
+    paths-ignore:
+      - '**.md'
+      - '.jules/**'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -22,13 +25,17 @@ jobs:
   # Build job
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15 # Prevent hanging builds from stalling pipeline
     permissions:
       contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Detect package manager
         id: detect-package-manager
+        if: hashFiles('package.json') != ''
         run: |
           if [ -f "${{ github.workspace }}/yarn.lock" ]; then
             echo "manager=yarn" >> $GITHUB_OUTPUT
@@ -45,11 +52,13 @@ jobs:
             exit 1
           fi
       - name: Setup Node
+        if: hashFiles('package.json') != ''
         uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: ${{ steps.detect-package-manager.outputs.manager }}
       - name: Setup Pages
+        if: hashFiles('package.json') != ''
         uses: actions/configure-pages@v5
         with:
           # Automatically inject basePath in your Next.js configuration file and disable
@@ -58,6 +67,7 @@ jobs:
           # You may remove this line if you want to manage the configuration yourself.
           static_site_generator: next
       - name: Restore cache
+        if: hashFiles('package.json') != ''
         uses: actions/cache@v4
         with:
           path: |
@@ -68,10 +78,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}-
       - name: Install dependencies
+        if: hashFiles('package.json') != ''
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
       - name: Build with Next.js
+        if: hashFiles('package.json') != ''
         run: ${{ steps.detect-package-manager.outputs.runner }} next build
       - name: Upload artifact
+        if: hashFiles('package.json') != ''
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./out
@@ -85,6 +98,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    timeout-minutes: 15 # Prevent hanging deployment jobs
     needs: build
     steps:
       - name: Deploy to GitHub Pages
