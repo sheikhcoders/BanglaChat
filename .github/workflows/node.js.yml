@@ -9,10 +9,14 @@ on:
   pull_request:
     branches: [ "main" ]
 
+# Explicit top-level permissions to enforce least privilege principle
+permissions:
+  contents: read
+
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     strategy:
       matrix:
@@ -21,6 +25,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        # Prevent persisting GITHUB_TOKEN in git config to mitigate token leakage risks
+        persist-credentials: false
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
