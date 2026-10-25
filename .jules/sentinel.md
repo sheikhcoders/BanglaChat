@@ -1,0 +1,4 @@
+## 2026-10-25 - CI Workflow Least-Privilege & Credential Protection
+**Vulnerability:** Default GitHub Actions permissions and credential persistence (`GITHUB_TOKEN`) exposed workflows to risk of unauthorized write access, token leakage, or runaway runner execution in uninitialized/minimal repos.
+**Learning:** Default CI template configurations lack restrictive scoping, permitting unnecessary permissions and keeping persistent credentials in workspace checkout steps. Additionally, step execution without `package.json` validation causes build pipeline crashes on initial repo states.
+**Prevention:** Always scope workflows to `permissions: contents: read`, set `persist-credentials: false` on `actions/checkout@v4`, enforce job `timeout-minutes: 15`, and check file presence before executing build/test commands.
