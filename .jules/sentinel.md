@@ -1,0 +1,4 @@
+## 2026-10-26 - Hardening CI Workflow Permissions and Credential Persistence
+**Vulnerability:** Default GITHUB_TOKEN permissions in GitHub Actions workflow jobs were unconstrained and checked-out repository tokens were persisted on disk by default (`persist-credentials: true`).
+**Learning:** In uninitialized or minimal repositories, unconstrained workflow permissions expose GITHUB_TOKEN credentials to potential downstream leakage or privilege escalation if malicious scripts or untrusted dependencies run in CI tasks.
+**Prevention:** Always explicitly define top-level read-only permissions (`permissions: contents: read`), set `persist-credentials: false` on `actions/checkout@v4`, enforce job-level execution timeouts (`timeout-minutes: 15`), and guard package manager executions when `package.json` is missing.
