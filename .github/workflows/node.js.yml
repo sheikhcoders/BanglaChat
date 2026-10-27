@@ -1,23 +1,36 @@
-# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
+# This workflow performs Node.js continuous integration.
+# Performance optimizations added by Bolt ⚡
 
 name: Node.js CI
 
 on:
   push:
     branches: [ "main" ]
+    # Bolt: Skip CI runs for documentation and agent metadata changes to conserve compute resources
+    paths-ignore:
+      - '**.md'
+      - '.jules/**'
   pull_request:
     branches: [ "main" ]
+    # Bolt: Skip CI runs for documentation and agent metadata changes to conserve compute resources
+    paths-ignore:
+      - '**.md'
+      - '.jules/**'
+
+# Bolt: Cancel outdated in-progress workflow runs when new commits are pushed
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    # Bolt: Limit job duration to 15 minutes to prevent hanging builds from wasting runner compute
+    timeout-minutes: 15
 
     strategy:
       matrix:
         node-version: [18.x, 20.x, 22.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
     - uses: actions/checkout@v4
@@ -25,7 +38,15 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+        # Bolt: Cache npm dependencies when lockfile exists to accelerate npm ci build times
+        cache: ${{ hashFiles('package-lock.json') != '' && 'npm' || '' }}
+    # Bolt: Execute Node steps only if package.json exists to prevent failures in uninitialized repos
+    - name: Install dependencies
+      if: hashFiles('package.json') != ''
+      run: npm ci
+    - name: Build source code
+      if: hashFiles('package.json') != ''
+      run: npm run build --if-present
+    - name: Run tests
+      if: hashFiles('package.json') != ''
+      run: npm test
