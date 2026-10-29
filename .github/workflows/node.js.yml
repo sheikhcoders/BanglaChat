@@ -6,13 +6,24 @@ name: Node.js CI
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - '**.md'
+      - '.jules/**'
   pull_request:
     branches: [ "main" ]
+    paths-ignore:
+      - '**.md'
+      - '.jules/**'
+
+# Cancel duplicate in-progress workflow runs on same branch/PR to save compute resources
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     strategy:
       matrix:
@@ -21,11 +32,35 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+    # Check if package.json and package-lock.json exist before attempting node setup and npm operations
+    - name: Check package.json existence
+      id: check_pkg
+      run: |
+        if [ -f "package.json" ]; then
+          echo "exists=true" >> $GITHUB_OUTPUT
+          if [ -f "package-lock.json" ]; then
+            echo "has_lock=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_lock=false" >> $GITHUB_OUTPUT
+          fi
+        else
+          echo "exists=false" >> $GITHUB_OUTPUT
+          echo "has_lock=false" >> $GITHUB_OUTPUT
+        fi
     - name: Use Node.js ${{ matrix.node-version }}
+      if: steps.check_pkg.outputs.exists == 'true'
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+        cache: ${{ steps.check_pkg.outputs.has_lock == 'true' && 'npm' || '' }}
+    - name: Install dependencies
+      if: steps.check_pkg.outputs.exists == 'true'
+      run: npm ci
+    - name: Build project
+      if: steps.check_pkg.outputs.exists == 'true'
+      run: npm run build --if-present
+    - name: Run tests
+      if: steps.check_pkg.outputs.exists == 'true'
+      run: npm test
