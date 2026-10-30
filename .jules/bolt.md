@@ -1,0 +1,3 @@
+## 2026-10-30 - CI Workflow Optimization in Minimal Repositories
+**Learning:** Running full matrix CI builds on non-code changes (such as markdown docs or journal files) wastes significant GitHub Actions compute time and runner capacity. Additionally, without concurrency cancellation controls and execution timeouts, superseded PR runs consume unnecessary build minutes.
+**Action:** Always include `paths-ignore` for documentation and metadata files (`'**.md'`, `'.jules/**'`), configure `concurrency` cancellation controls on PR builds, set `timeout-minutes`, and add `package.json` execution guards to skip unnecessary commands when dependencies or project manifests are not present.
