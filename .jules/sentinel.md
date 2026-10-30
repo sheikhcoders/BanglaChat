@@ -1,0 +1,4 @@
+## 2026-10-30 - GitHub Actions Workflow Least-Privilege Scoping and Credential Protection
+**Vulnerability:** Default GitHub Actions GITHUB_TOKEN has broad permissions if unspecified, and `actions/checkout` by default persists credentials in the local git config, allowing subsequent build steps or malicious dependencies to read/modify repo contents or leak token. Also, jobs lacking timeouts risk resource exhaustion or hanging runner processes.
+**Learning:** In minimal or uninitialized repositories, CI workflow security is paramount. Default permissions might allow unauthorized modification if workflow security is not explicitly declared.
+**Prevention:** Enforce explicit top-level `permissions: contents: read`, set `persist-credentials: false` on `actions/checkout@v4`, and define `timeout-minutes: 15` on all CI workflow jobs.
