@@ -9,10 +9,14 @@ on:
   pull_request:
     branches: [ "main" ]
 
+# Enforce least-privilege permissions globally across workflow execution
+permissions:
+  contents: read
+
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    timeout-minutes: 15 # Prevent resource exhaustion from stuck processes
 
     strategy:
       matrix:
@@ -21,11 +25,15 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        persist-credentials: false # Prevent token persistence in git config
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
     - run: npm ci
+      if: hashFiles('package.json') != ''
     - run: npm run build --if-present
+      if: hashFiles('package.json') != ''
     - run: npm test
+      if: hashFiles('package.json') != ''
