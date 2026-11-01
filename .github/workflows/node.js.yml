@@ -9,10 +9,15 @@ on:
   pull_request:
     branches: [ "main" ]
 
+# Security: Enforce least privilege with read-only repository permissions by default
+permissions:
+  contents: read
+
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    # Security: Limit execution timeout to prevent runaway resource consumption / DoS
+    timeout-minutes: 15
 
     strategy:
       matrix:
@@ -20,7 +25,10 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
+    # Security: Disable credential persistence to prevent token exposure in workspace
     - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
