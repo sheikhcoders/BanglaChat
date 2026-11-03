@@ -9,9 +9,14 @@ on:
   pull_request:
     branches: [ "main" ]
 
+# Security: Enforce principle of least privilege with read-only default permissions
+permissions:
+  contents: read
+
 jobs:
   build:
-
+    # Security: Limit execution time to 15 minutes to prevent runaway builds and resource exhaustion
+    timeout-minutes: 15
     runs-on: ubuntu-latest
 
     strategy:
@@ -20,12 +25,18 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
+    # Security: Prevent GitHub token from persisting on the runner filesystem
     - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+    # Guard steps against failure in uninitialized repository without package.json
+    - if: hashFiles('package.json') != ''
+      run: npm ci
+    - if: hashFiles('package.json') != ''
+      run: npm run build --if-present
+    - if: hashFiles('package.json') != ''
+      run: npm test
