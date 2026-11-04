@@ -18,15 +18,22 @@ concurrency:
   group: "pages"
   cancel-in-progress: false
 
+# Sentinel: Enforce default read-only permissions at top-level
+permissions:
+  contents: read
+
 jobs:
   # Build job
   build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
+    # Sentinel: Limit execution time to prevent runaway runner usage
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Sentinel: Do not persist GitHub token to runner workspace
+          persist-credentials: false
       - name: Detect package manager
         id: detect-package-manager
         run: |
@@ -78,6 +85,8 @@ jobs:
 
   # Deployment job
   deploy:
+    # Sentinel: Limit deployment execution time
+    timeout-minutes: 15
     permissions:
       pages: write
       id-token: write

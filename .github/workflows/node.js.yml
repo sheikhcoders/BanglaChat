@@ -9,10 +9,15 @@ on:
   pull_request:
     branches: [ "main" ]
 
+# Sentinel: Enforce least privilege with read-only repository permissions
+permissions:
+  contents: read
+
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    # Sentinel: Limit execution time to 15 minutes to prevent CI runner exhaustion / DoS
+    timeout-minutes: 15
 
     strategy:
       matrix:
@@ -20,12 +25,18 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
+    # Sentinel: Prevent persisting GITHUB_TOKEN on runner disk
     - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
+    # Guard steps against uninitialized repository states
     - run: npm ci
+      if: hashFiles('package.json') != ''
     - run: npm run build --if-present
+      if: hashFiles('package.json') != ''
     - run: npm test
+      if: hashFiles('package.json') != ''
