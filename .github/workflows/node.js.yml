@@ -9,10 +9,16 @@ on:
   pull_request:
     branches: [ "main" ]
 
+# Security: Set explicit top-level read-only permissions following least privilege
+permissions:
+  contents: read
+
 jobs:
   build:
 
     runs-on: ubuntu-latest
+    # Security: Limit execution time to mitigate DoS and runner resource exhaustion
+    timeout-minutes: 15
 
     strategy:
       matrix:
@@ -20,12 +26,18 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
+    # Security: Disable GITHUB_TOKEN persistence on checkout to prevent credential leakage
     - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
+    # Guard steps against missing package.json in uninitialized repository
     - run: npm ci
+      if: hashFiles('package.json') != ''
     - run: npm run build --if-present
+      if: hashFiles('package.json') != ''
     - run: npm test
+      if: hashFiles('package.json') != ''
