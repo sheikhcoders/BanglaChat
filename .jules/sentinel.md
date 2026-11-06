@@ -1,0 +1,6 @@
+# Sentinel Security Journal
+
+## 2026-11-06 - CI Workflow Security Hardening in Uninitialized Repositories
+**Vulnerability:** CI workflows lacked top-level least-privilege permission scoping, persisted sensitive credentials on disk post-checkout, omitted job execution timeouts (allowing potential denial-of-service/resource exhaustion), and unconditionally attempted package manager caching/execution on an uninitialized repository lacking `package.json`.
+**Learning:** Default GitHub Actions workflows may inherit broad write permissions if repository defaults are permissive. Furthermore, `actions/checkout` persists GitHub tokens in `.git/config` by default (`persist-credentials: true`), which risks credential leakage if untrusted build scripts or dependencies execute. In an uninitialized repository, CI steps referencing missing project metadata can cause workflow errors or unintended failure cascades.
+**Prevention:** Always enforce explicit read-only top-level permissions (`permissions: contents: read`), disable checkout token persistence (`persist-credentials: false`), enforce strict job timeouts (`timeout-minutes: 15`), and guard package-dependent steps with file presence checks (`if: hashFiles('package.json') != ''`).

@@ -9,9 +9,14 @@ on:
   pull_request:
     branches: [ "main" ]
 
+# Security: Enforce least privilege - default to read-only access for repository tokens
+permissions:
+  contents: read
+
 jobs:
   build:
-
+    # Security: Limit execution duration to prevent runaway processes / resource exhaustion DoS
+    timeout-minutes: 15
     runs-on: ubuntu-latest
 
     strategy:
@@ -20,12 +25,17 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
+    # Security: Disable credential persistence to prevent token exposure to untrusted code/build scripts
     - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+    - if: hashFiles('package.json') != ''
+      run: npm ci
+    - if: hashFiles('package.json') != ''
+      run: npm run build --if-present
+    - if: hashFiles('package.json') != ''
+      run: npm test

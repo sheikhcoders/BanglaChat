@@ -21,12 +21,17 @@ concurrency:
 jobs:
   # Build job
   build:
+    # Security: Limit execution duration to prevent runaway processes / resource exhaustion DoS
+    timeout-minutes: 15
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
       - name: Checkout
+        # Security: Disable credential persistence to prevent token exposure
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Detect package manager
         id: detect-package-manager
         run: |
@@ -78,6 +83,8 @@ jobs:
 
   # Deployment job
   deploy:
+    # Security: Limit execution duration to prevent runaway processes / resource exhaustion DoS
+    timeout-minutes: 15
     permissions:
       pages: write
       id-token: write
