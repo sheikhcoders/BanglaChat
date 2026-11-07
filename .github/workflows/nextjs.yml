@@ -12,6 +12,10 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+# Security: Set top-level workflow permissions to read-only by default (least privilege principle)
+permissions:
+  contents: read
+
 # Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
 # However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
 concurrency:
@@ -22,11 +26,16 @@ jobs:
   # Build job
   build:
     runs-on: ubuntu-latest
+    # Security: Limit maximum execution time to avoid runaway runner costs
+    timeout-minutes: 15
     permissions:
       contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Security: Prevent GitHub token persistence
+          persist-credentials: false
       - name: Detect package manager
         id: detect-package-manager
         run: |
@@ -78,6 +87,8 @@ jobs:
 
   # Deployment job
   deploy:
+    # Security: Limit maximum execution time
+    timeout-minutes: 15
     permissions:
       pages: write
       id-token: write
