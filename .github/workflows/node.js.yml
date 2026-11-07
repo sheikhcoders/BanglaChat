@@ -9,10 +9,16 @@ on:
   pull_request:
     branches: [ "main" ]
 
+# Security: Set workflow permissions to read-only by default (least privilege principle)
+permissions:
+  contents: read
+
 jobs:
   build:
 
     runs-on: ubuntu-latest
+    # Security: Limit maximum job execution time to mitigate DoS / runaway compute costs
+    timeout-minutes: 15
 
     strategy:
       matrix:
@@ -20,12 +26,18 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
+    # Security: Do not persist GitHub credentials in local git configuration
     - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
+    # Security: Guard execution steps if package.json has not been created yet
     - run: npm ci
+      if: hashFiles('package.json') != ''
     - run: npm run build --if-present
+      if: hashFiles('package.json') != ''
     - run: npm test
+      if: hashFiles('package.json') != ''
