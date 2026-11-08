@@ -18,15 +18,22 @@ concurrency:
   group: "pages"
   cancel-in-progress: false
 
+# Security: Set top-level read-only permissions by default
+permissions:
+  contents: read
+
 jobs:
   # Build job
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15 # Security: Limit execution time to mitigate runner exhaustion attacks
     permissions:
       contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false # Security: Prevent CI token leakage to subsequent build steps
       - name: Detect package manager
         id: detect-package-manager
         run: |
@@ -85,6 +92,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    timeout-minutes: 15 # Security: Limit execution time to mitigate runner exhaustion attacks
     needs: build
     steps:
       - name: Deploy to GitHub Pages
