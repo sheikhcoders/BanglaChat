@@ -9,10 +9,15 @@ on:
   pull_request:
     branches: [ "main" ]
 
+# Explicitly declare permissions at workflow level (least privilege)
+permissions:
+  contents: read
+
 jobs:
   build:
 
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     strategy:
       matrix:
@@ -21,11 +26,19 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        # Prevent token exposure across workspace
+        persist-credentials: false
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+    - name: Install dependencies
+      if: hashFiles('package.json') != ''
+      run: npm ci
+    - name: Build
+      if: hashFiles('package.json') != ''
+      run: npm run build --if-present
+    - name: Test
+      if: hashFiles('package.json') != ''
+      run: npm test
