@@ -9,10 +9,14 @@ on:
   pull_request:
     branches: [ "main" ]
 
+# Least privilege: explicit read-only permissions for workflow token
+permissions:
+  contents: read
+
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     strategy:
       matrix:
@@ -21,11 +25,15 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+    - if: hashFiles('package.json') != ''
+      run: npm ci
+    - if: hashFiles('package.json') != ''
+      run: npm run build --if-present
+    - if: hashFiles('package.json') != ''
+      run: npm test
